@@ -19,7 +19,12 @@ Finally, I created a file named 1_updated_functions.R which contains my comments
 
 More to come!! (I should contact you latter today regarding the SVM; the S did not stand for Supervized nor Standarized, but for support ^^').
 
- 
+## 23.10.20
+
+Hello Amhed! I'm still trying to figure out how to work with git hub but it's very exciting. 
+For some reason the suggestions you had for the main function Rsrc/ReadDataFunc  did not work, which.min always gave off the index 1 instead of the actual value but which.max worked fine. 
+I also changed the script analysis/TestCh.R slightly and added a plot function that plots the mean vs the Id of the worm with ggplot (it's very weird compared to normal plot functions on matlab lol)
+I wish I had more time to work on in this weekend but I have a couple of important deadlines due. I'll check out the SVM as soon as I have time. 
 
 
 

@@ -6,7 +6,7 @@ ReadData <- function(Filename,TOFmin,TOFmax) {
 	} else if(missing(TOFmin) | missing(TOFmax)) {
 		Filenamecsv <- paste(Filename,'.csv',sep = '')
 		completematrix <- read.csv(Filenamecsv)
-		maxrow <- which(completematrix[,2]=='')
+		maxrow <- which.max(completematrix[,2]=='') #changed to which.max (which min does not work as intended as it gets the index 1 for some reason)
 		completematrix <- completematrix %>%
 		slice(1:(maxrow[1]-1)) %>%
 		transmute(ID = Id, TOF = TOF, EXT = Extinction, GF = Green, YF = Yellow, RF = Red) 
@@ -14,7 +14,7 @@ ReadData <- function(Filename,TOFmin,TOFmax) {
 	} else {
 		Filenamecsv <- paste(Filename,'.csv',sep ='')
 		completematrix <- read.csv(Filenamecsv)
-		maxrow <- which(completematrix[,2]=='')
+		maxrow <- which.max(completematrix[,2]=='') #changed to which.max
 		completematrix <- completematrix %>%
 		slice(1:(maxrow[1]-1)) %>%
 		transmute(ID = Id, TOF = TOF, EXT = Extinction, GF = Green, YF = Yellow, RF = Red) %>%
