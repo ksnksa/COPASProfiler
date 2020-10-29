@@ -19,7 +19,7 @@ CreateVectorsObtainList <- function(Filename1,Filename2) {
       
       columnnum <- Idmatrix[Id,1]
       #sometimes in the data set there's more values after the first 0 (then we can probably find a way to distinguish that too)
-      rownum <- which.min(completematrix[, columnnum]==0) ## which retrieves all matches. which.min retrieves the lowest index that is TRUE to the condition
+      rownum <- which.min(completematrix[, columnnum]) ## FIXED### which retrieves all matches. which.min retrieves the lowest index that is TRUE to the condition
       rownum <- rownum - 1 
       temp <- completematrix[2:rownum, columnnum]
       #assign(Samplename, temp)
@@ -44,7 +44,7 @@ ReadData <- function(Filename,TOFmin,TOFmax) {
   } else if(missing(TOFmin) | missing(TOFmax)) {
     Filenamecsv <- paste(Filename,'.csv',sep = '')
     completematrix <- read.csv(Filenamecsv)
-    maxrow <- which.min(completematrix[,2]=='') ## again which will return multiple elements as long as they are TRUE for the imposed condition; which.min is better for this context
+    maxrow <- which.min(completematrix[,2]) ## again which will return multiple elements as long as they are TRUE for the imposed condition; which.min is better for this context
     completematrix <- completematrix %>%
       slice(1:(maxrow[1]-1)) %>%
       transmute(ID = Id, TOF = TOF, EXT = Extinction, GF = Green, YF = Yellow, RF = Red) 
@@ -52,7 +52,7 @@ ReadData <- function(Filename,TOFmin,TOFmax) {
   } else {
     Filenamecsv <- paste(Filename,'.csv',sep ='')
     completematrix <- read.csv(Filenamecsv)
-    maxrow <- which(completematrix[,2]=='')
+    maxrow <- which.max(completematrix[,2])
     completematrix <- completematrix %>%
       slice(1:(maxrow[1]-1)) %>%
       transmute(ID = Id, TOF = TOF, EXT = Extinction, GF = Green, YF = Yellow, RF = Red) %>%

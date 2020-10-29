@@ -27,4 +27,16 @@ I also changed the script analysis/TestCh.R slightly and added a plot function t
 I wish I had more time to work on in this weekend but I have a couple of important deadlines due. I'll check out the SVM as soon as I have time. 
 
 
+## 29.10.20
 
+Hey Khlifa! HOw are you doing and how did you find Adamala's presentation? It's really cool the techniques/methods they are developing isn't?. I bet we can convice Christian to try some of them :).
+
+So, I review your plotting code and fix part of my mistakes of my R functions (sorry for that). You can find my review in: 
+`analysis/Test_read-profile_TASKs.R`
+Also, I added notes and wrote the kind of expected function/pipe required to do a plotting GUI interface as Sonia suggested. In order to test the plotting of multiple profiles, I added to the data folder the N2 profiles that Sonia gave us previously.
+
+Please dont be afraid to ask any doubt, inquiry or even spot and blame my mistakes hahaha :). Similarly, remember that there is no rush and we will do according to your schedule.
+
+Cheers!
+
+Amhed
