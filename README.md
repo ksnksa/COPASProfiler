@@ -40,3 +40,13 @@ Please dont be afraid to ask any doubt, inquiry or even spot and blame my mistak
 Cheers!
 
 Amhed
+
+## 01.11.20
+
+Hey Amhed! 
+The presentation was very interesting! 
+I created a simple function called 'ReadProfile' that takes in the filename and required ID 
+So far it returns a dataframe that follows the same format you had in your review in 'Test_read-profile_TASKs.R' so the result will be easily plotted using ggplot 
+
+Best regards,
+Khlifa 
