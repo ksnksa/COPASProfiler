@@ -50,3 +50,10 @@ So far it returns a dataframe that follows the same format you had in your revie
 
 Best regards,
 Khlifa 
+
+## 0.1.11.20
+Hello again! 
+I set up the notification so that we recieve an email after each push. 
+
+Best, 
+Khlifa
