@@ -73,7 +73,7 @@ for(c in 1:3) {
     datafr_dist <- dist(eval(as.name(channelstage)), method ="euclidean")
     fit <- hclust(datafr_dist, method="ward.D")
     #cn <- NbClust(data = datafrAdult, diss = NULL, distance = "euclidean", min.nc = 2, max.nc = 10,method = "ward.D", index = "ball") 
-    clustered_data <- cutree(fit, k = 3 ) #For now i picked two clusters, to use NbClust we replace it with -> as.numeric(cn$Best.nc[1])
+    clustered_data <- cutree(fit, k = 2 ) #For now i picked two clusters, to use NbClust we replace it with -> as.numeric(cn$Best.nc[1])
     clustered_data_tidy <- as.data.frame(as.table(clustered_data)) 
     colnames(clustered_data_tidy) <- c("ID","cluster")
     clustered_data_tidy$ID <- as.character(clustered_data_tidy$ID)
@@ -112,12 +112,12 @@ for(c in 1:3) {
       newdatafr <- melt(test, id.vars = "Length", measure.vars = c(cluster_IDs[1:maxL,])) 
       
       
-      p = ggplot(newdatafr, aes(Length, value,)) +
+      p = ggplot(newdatafr, aes(Length, value,col = variable)) +
         geom_line(color="grey") +
         geom_line(aes(x=Length, y=Mean),clustermean, color = 'red') + #the mean will be the red line 
         theme_minimal() +
-        ylab("amp") + xlab("") +
-        facet_wrap(~variable)
+        ylab("amp") + xlab("") # +
+       # facet_wrap(~variable)
       
       
       ggsave(paste("Cluster_",cl_id,"_first50Worms",channelstage,".pdf",sep=""),p)
