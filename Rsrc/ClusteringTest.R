@@ -108,10 +108,8 @@ for(c in 1:3) {
       }
       clustermean <- data.frame(Length = 1:maxrow, Mean = rowMeans(test))
       test$Length <- 1:maxrow
-      if (length(cluster_IDs[,]) >= 50) { newdatafr <- melt(test, id.vars = "Length", measure.vars = c(cluster_IDs[1:50,])) }
-      else if (length(cluster_IDs[,]) < 50 & length(cluster_IDs[,]) >= 10 ) { newdatafr <- melt(test, id.vars = "Length", measure.vars = c(cluster_IDs[1:10,]))}
-      else if (length(cluster_IDs) < 10) { newdatafr <- melt(test, id.vars = "Length", measure.vars = c(cluster_IDs[1,]))} #plotting the first worm 
-    
+      if(nrow(cluster_IDs) > 50){maxL = 50}else{maxL = nrow(cluster_IDs)}
+      newdatafr <- melt(test, id.vars = "Length", measure.vars = c(cluster_IDs[1:maxL,])) 
       
       
       p = ggplot(newdatafr, aes(Length, value,)) +
