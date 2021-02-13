@@ -58,7 +58,7 @@ PlotClusters <- function(Channel,ClusterTable) {
       theme_minimal() +
       ylab("amp") + xlab("") +
      ggtitle(paste('Stage: ',Stage[i],' Cluster# ',cl_id,' With ',nrow(cluster_IDs),' lucky worms',' std=',stdmean,sep=''))
-    PlotList[[counter]] <- p
+    PlotList[[paste(Stage[i],'.',cl_id,sep='')]] <- p
     counter <- counter +1 
     }
     
