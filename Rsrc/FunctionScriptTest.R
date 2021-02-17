@@ -41,6 +41,7 @@ GoodIndex <- as.matrix(GoodIDs[2:length(GoodIDs)])
 GoodIndex <- matrix(GoodIndex, ncol = ncol(GoodIndex), dimnames = NULL)
 #ch0 <- as.data.frame(channellist[[1]])
 #ch0_full <- ch0
+
 AdultGoodIndex <- matrix(GoodIndex[1,which(GoodIndex[1,] %in% rownames(Adult))]) 
  #index number 
 training_Adult <- Adult[1:(which(as.numeric(sub('X','',rownames(Adult))) >= 365)[1]),] #make it so the last number should be x365 (max row) (Did this because I picked worms up to 365, the rest I did not catagorize so I'm using the remaining worms as a prediction model)
@@ -98,9 +99,56 @@ ggplot(newdatafr, aes(Length, value,col = variable)) +
   ylab("amp") + xlab("") + 
   ggtitle(paste('Adults', ' With ',nrow(GoodAdults),' lucky worms',' std=',stdmean,sep=''))
 
+#Creating data frame with the training set
+TrainingSet <- Adult[AdultGoodIndex[,1],]
+#plotting the training set
+maxcol <- 0
+rowmean <- 0
+for (k in 1:dim(TrainingSet)[1]) { #finding the max length for this cluster
+  temp2 <- as.numeric(which.min(TrainingSet[k,]))
+  if (maxcol > temp2) {
+  } else {
+    maxcol <- temp2 
+  }
+  
+}
+for (m in 1:dim(TrainingSet)[1]) {
+  ID <- toString(rownames(TrainingSet)[m])
+  if (m == 1) {
+    test <- data.frame(placeholder = as.numeric(TrainingSet[m,1:maxcol]))
+    names(test)[m] <- ID
+  } else {
+    test$placeholder <- as.numeric(TrainingSet[m,1:maxcol])
+    names(test)[m] <- ID
+  }
+}
+clustermean <- data.frame(Length = 1:maxcol, Mean = rowMeans(test))
+test$Length <- 1:maxcol
+maxL = nrow(TrainingSet)
+newdatafr <- melt(test, id.vars = "Length", measure.vars = c(rownames(TrainingSet)[1:maxL])) 
+stdmean <- 0
+for (j in nrow(TrainingSet)) {
+  stdmean <- stdmean + sd(TrainingSet[j,])
+}
+stdmean <- stdmean/nrow(TrainingSet)
 
 
+ggplot(newdatafr, aes(Length, value,col = variable)) +
+  geom_line(color="grey") +
+  geom_line(aes(x=Length, y=Mean),clustermean, color = 'red') + #the mean will be the red line 
+  theme_minimal() +
+  ylab("amp") + xlab("") + 
+  ggtitle(paste('Training set', ' With ',nrow(TrainingSet),' lucky worms',' std=',stdmean,sep=''))
 
+
+#Sanity check, are all the training data in the predection?
+tempp <- GoodIndex[1,which(AdultGoodIndex %in% rownames(GoodAdults))]
+if (length(tempp) == length(AdultGoodIndex)) {
+  print('All the training worms were in the prediction model')
+} else {
+  Remaining <- length(AdultGoodIndex) - length(tempp)
+  print(paste(Remaining,' Worms were not predicted',sep = ''))
+}
 
 
 
