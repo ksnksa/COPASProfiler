@@ -34,13 +34,14 @@ GoodIndex <- matrix(GoodIndex, ncol = ncol(GoodIndex), dimnames = NULL)
 #For loop that randomly picks a specific number of good worms (from the training set) to try and predict the remaining worms
 AdultGoodIndex <- matrix(GoodIndex[1,which(GoodIndex[1,] %in% rownames(Adult))]) 
 BadWorms <- Adult[-which(rownames(Adult) %in% AdultGoodIndex),]
-
-for (o in 1:10) {PredictionMean <- 0 
+PredictionMean <- 0 
+Accuracy <- data.frame()
+for (o in 1:100) {
   #Change the size to change how many are picked
-  SampleSize <- 45
-  RandomIndex <- sample(c(1:52), size=SampleSize, replace = FALSE)
+  SampleSize <- 25
+  RandomIndex <- sample(c(1:length(AdultGoodIndex)), size=SampleSize, replace = FALSE)
   RandomIndex <- sort(RandomIndex)
-  ComplementVec <- 1:52
+  ComplementVec <- 1:length(AdultGoodIndex)
   ComplementVec <- ComplementVec[-RandomIndex]
   RandomIndex <- AdultGoodIndex[RandomIndex]
   PredIndex <- AdultGoodIndex[ComplementVec]
@@ -68,6 +69,22 @@ for (o in 1:10) {PredictionMean <- 0
     #PredLength <- length(which(pred == 2)) 
     #CorrectPredictionPercent <- 1 - (length(ComplementVec) - PredLength)/length(ComplementVec)
     #PredictionMean <- (PredictionMean + CorrectPredictionPercent) /2
+  Positive <- rownames(PredictionSet[which(pred==2),])
+  TP <- sum((Positive %in% GoodIDs), na.rm = TRUE)
+  Negative <- rownames(PredictionSet[which(pred==1),])
+  TN <- length(Negative %in% GoodIDs) - sum((Negative %in% GoodIDs), na.rm = TRUE)
+  Accuracy[1,o] <- (TP + TN) / (length(Positive) + length(Negative))
+  Accuracy[2,o] <- o
 }
+y<-as.numeric(Accuracy[1,])
+x<-as.numeric(Accuracy[2,])
+df<-data.frame(x=x,y=y)
+df_molten=melt(df,id.vars="x")
+ggplot(df_molten) + geom_line(aes(x=x,y=y,color=variable))
+geom_line( color="grey") +
+  theme_minimal() +
+  ylab("Accuracy %") + xlab("Run number") + 
+  ggtitle('Accuracy')
+
 
     #print(PredictionMean)
