@@ -32,7 +32,9 @@ L1 <- channellist[[1]][which(TOF[,2]=='L1'),]
 L23 <- channellist[[1]][which(TOF[,2]=='L2/L3'),]
 L4 <- channellist[[1]][which(TOF[,2]=='L4'),]
 Adult <- channellist[[1]][which(TOF[,2]=='Adult'),]
-
+#WormNumber <- unique(which(Adult[,1:80] > 20000, arr.ind = TRUE))
+#WormNumber <- sort(unique(WormNumber[,1]))
+#Adult <- Adult[-c(WormNumber),]
 
 #Finding the "good" worms in Adult (The rest of the good worms only have 10 or less worms in the training set, only Adult had enough to supervise the clustering so far)
 ##Loading up the good IDs and creating the training set
@@ -46,20 +48,53 @@ AdultGoodIndex <- matrix(GoodIndex[1,which(GoodIndex[1,] %in% rownames(Adult))])
  #index number 
 training_Adult <- Adult[1:(which(as.numeric(sub('X','',rownames(Adult))) >= 365)[1]),] #make it so the last number should be x365 (max row) (Did this because I picked worms up to 365, the rest I did not catagorize so I'm using the remaining worms as a prediction model)
 #ch0_data <- ch0
-Adult <- as.data.frame(Adult)
-training_Adult <- as.data.frame(training_Adult)
-training_Adult$Factor <- as.numeric(1) #creating a true false table
-training_Adult$Factor[ as.numeric(sub('X','',which(rownames(training_Adult) %in% AdultGoodIndex)))] <- as.numeric(2) #changing it to true for the good worms (true being 2 and false is 1)
-x <- lapply(training_Adult[,1:1124],as.numeric) #it's up to 1124 (becease we added one column factor, so we take it off by doing this to make training set same size as prediction set?)
-m <- as.data.frame(x)
-y <- training_Adult$Factor #make y variable(dependent)
-model <- svm(m, y,type='C-classification',nu=0.15,
-             scale=TRUE,
-             kernel="polynomial") #I'm still not sure which parameters are better but it seems like polynomial makes the most sense 
-pred <- predict(model, Adult)
+PredAdult <- as.data.frame(Adult)
+#removing good adults
+PredAdult <- Adult[-which(rownames(Adult) %in% AdultGoodIndex ),]
+#removing the bad worms 
+PredAdult <- Adult[which(rownames(Adult) == 'X365'):dim(Adult)[1],]
+#PredAdult <- Adult[which(rownames(Adult) == 'X366'):dim(Adult)[1],]
+BadWormSampleSize <- 52
+    #Change the size to change how many are picked
+    SampleSize <- 52
+    RandomIndex <- sample(c(1:length(AdultGoodIndex)), size=SampleSize, replace = FALSE)
+    RandomIndex <- sort(RandomIndex)
+    ComplementVec <- 1:length(AdultGoodIndex)
+    ComplementVec <- ComplementVec[-RandomIndex]
+    RandomIndex <- AdultGoodIndex[RandomIndex]
+    PredIndex <- AdultGoodIndex[ComplementVec]
+    IndexMax <- max( as.numeric(sub('X','',RandomIndex)))
+    PredBadWormsIndex <- sample(c(1:nrow(PredAdult)),size = BadWormSampleSize, replace = FALSE)
+    PredBadWormsIndex <- sort(PredBadWormsIndex)
+    PredictionSet <- as.data.frame(rbind(PredAdult[-PredBadWormsIndex,],Adult[as.numeric(sub('X','',which(rownames(Adult) %in% PredIndex))),]))
+    
+    TrainingSet <- as.data.frame(rbind(PredAdult[PredBadWormsIndex,],Adult[as.numeric(sub('X','',which(rownames(Adult) %in% RandomIndex))),]))
+    
+    TrainingSet$Factor <- as.numeric(1) #creating a true false table
+    TrainingSet$Factor[(dim(PredAdult[PredBadWormsIndex,])[1]+1):nrow(TrainingSet)] <- as.numeric(2) 
+    x <- lapply(TrainingSet[,1:(ncol(TrainingSet)-1)],as.numeric) 
+    m <- as.data.frame(x)
+    y <- TrainingSet$Factor #make y variable(dependent)
+    model <- svm(m, y,type='C-classification',
+                 scale=TRUE,
+                 kernel="linear")
+    pred <- predict(model, PredAdult)
+#training_Adult <- as.data.frame(training_Adult)
+#training_Adult$Factor <- as.numeric(1) #creating a true false table
+#training_Adult$Factor[ as.numeric(sub('X','',which(rownames(training_Adult) %in% AdultGoodIndex)))] <- as.numeric(2) #changing it to true for the good worms (true being 2 and false is 1)
+#x <- lapply(training_Adult[,1:1124],as.numeric) #it's up to 1124 (becease we added one column factor, so we take it off by doing this to make training set same size as prediction set?)
+#m <- as.data.frame(x)
+#y <- training_Adult$Factor #make y variable(dependent)
+#model <- svm(m, y,type='C-classification',nu=0.15,
+#             scale=TRUE,
+#             kernel="polynomial") #I'm still not sure which parameters are better but it seems like polynomial makes the most sense 
+#pred <- predict(model, PredAdult)
 
 #Creating data frame with the good catagorized worms from the clustering
-GoodAdults <- Adult[which(pred == 2),]
+#GoodAdults <- Adult[which(pred == 2),]
+GoodAdults <- PredAdult
+#change it to which == 2 for good adults 
+#GoodAdults <- Adult[AdultGoodIndex[,1],]
 #plotting the good adults 
 maxcol <- 0
 rowmean <- 0
@@ -92,13 +127,13 @@ for (j in nrow(GoodAdults)) {
 stdmean <- stdmean/nrow(GoodAdults)
 
 
-ggplot(newdatafr, aes(Length, value,col = variable)) +
+PlotGoodWorms <- ggplot(newdatafr, aes(Length, value,col = variable)) +
   geom_line(color="grey") +
   geom_line(aes(x=Length, y=Mean),clustermean, color = 'red') + #the mean will be the red line 
   theme_minimal() +
   ylab("amp") + xlab("") + 
   ggtitle(paste('Adults', ' With ',nrow(GoodAdults),' lucky worms',' std=',stdmean,sep=''))
-
+save(PlotGoodWorms,file = 'Filtered.RData')
 #Creating data frame with the training set
 TrainingSet <- Adult[AdultGoodIndex[,1],]
 #plotting the training set
