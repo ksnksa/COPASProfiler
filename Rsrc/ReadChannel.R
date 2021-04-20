@@ -19,6 +19,9 @@ ReadChannel <- function(Ch0Directory,Ch1Directory,Ch2Directory,Ch3Directory) {
   } else if (nrow(Ch0) != nrow(Ch3) | ncol(Ch0) != ncol(Ch3)) {
     stop('Channel 0 and Channel 3 do not have the same dimensions')
   } 
+  
+  # sum(Ch0[1,]==Ch1[1,]) == ncol(Ch0)
+  
   if (Ch0[1,1] == Ch1[1,1] & Ch0[1,2] == Ch1[1,2]) {
     stop('Channel 0 and Channel 1 are the same channel')
   } else if (Ch0[1,1] == Ch2[1,1]& Ch0[1,2] == Ch2[1,2]) {
