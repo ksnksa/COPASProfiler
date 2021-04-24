@@ -22,17 +22,17 @@ ReadChannel <- function(Ch0Directory,Ch1Directory,Ch2Directory,Ch3Directory) {
   
   # sum(Ch0[1,]==Ch1[1,]) == ncol(Ch0)
   
-  if (Ch0[1,1] == Ch1[1,1] & Ch0[1,2] == Ch1[1,2]) {
+  if (sum((Ch0[1,1:100] == Ch1[1,1:100])[1,]) == 100) {
     stop('Channel 0 and Channel 1 are the same channel')
-  } else if (Ch0[1,1] == Ch2[1,1]& Ch0[1,2] == Ch2[1,2]) {
+  } else if (sum((Ch0[1,1:100] == Ch2[1,1:100])[1,]) == 100) {
     stop('Channel 0 and Channel 2 are the same channel')
-  } else if (Ch0[1,1] == Ch3[1,1]& Ch0[1,2] == Ch3[1,2]) {
+  } else if (sum((Ch0[1,1:100] == Ch3[1,1:100])[1,]) == 100) {
     stop('Channel 0 and Channel 3 are the same channel')
-  } else if (Ch1[1,1] == Ch2[1,1]& Ch1[1,2] == Ch2[1,2]) {
+  } else if (sum((Ch1[1,1:100] == Ch2[1,1:100])[1,]) == 100) {
     stop('Channel 1 and Channel 2 are the same channel')
-  } else if (Ch1[1,1] == Ch3[1,1]& Ch1[1,2] == Ch3[1,2]) {
+  } else if (sum((Ch1[1,1:100] == Ch3[1,1:100])[1,]) == 100) {
     stop('Channel 1 and Channel 3 are the same channel')
-  } else if (Ch2[1,1] == Ch3[1,1]& Ch2[1,2] == Ch3[1,2]) {
+  } else if (sum((Ch2[1,1:100] == Ch3[1,1:100])[1,]) == 100) {
     stop('Channel 2 and Channel 3 are the same channel')
   } 
   

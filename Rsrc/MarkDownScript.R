@@ -1,26 +1,30 @@
 library(e1071)
 library(ggplot2)
-library(reshape)
-library(dplyr)
+#library(reshape)
+#library(dplyr)
 
-library(cowplot)
+#library(cowplot)
 #TRY TO NORMALIZE AND COMPARE ACCURACY
 StartTime <- Sys.time()
-Ch0D <- (paste(getwd(),'/data/N2','/','n2','_profil_ch0_prf.txt',sep=''))
-Ch1D <- (paste(getwd(),'/data/N2','/','n2','_profil_ch1_prf.txt',sep=''))
-Ch2D <- (paste(getwd(),'/data/N2','/','n2','_profil_ch2_prf.txt',sep=''))
-Ch3D <- (paste(getwd(),'/data/N2','/','n2','_profil_ch3_prf.txt',sep=''))
+Ch0D1 <- (paste(getwd(),'/data/N2','/','n2','_profil_ch0_prf.txt',sep=''))
+Ch1D1 <- (paste(getwd(),'/data/N2','/','n2','_profil_ch1_prf.txt',sep=''))
+Ch2D1 <- (paste(getwd(),'/data/N2','/','n2','_profil_ch2_prf.txt',sep=''))
+Ch3D1 <- (paste(getwd(),'/data/N2','/','n2','_profil_ch3_prf.txt',sep=''))
+#Ch0 <- read.delim(Ch0D1, header=TRUE) 
+#Ch1 <- read.delim(Ch1D1, header=TRUE)
+#Ch2 <- read.delim(Ch2Directory, header=TRUE)
+#Ch3 <- read.delim(Ch3Directory, header=TRUE)
 source((paste(getwd(),'/Rsrc','/','WormBootStrap.R',sep='')))
-MaxTOF = 64000
-MinLength = 40
-MaxLength = 500
-GoodIDD =paste(getwd(),'/data/N2','/GoodIDsNew.csv',sep='')
-NumberOfRuns = 25
-NumberOfBadWorms = 45
-NumbersOfGoodWorms = c(75,65,50, 45, 25, 15, 10, 5)
-ChannelToCluster = 4 
-WormStage = 'Adult'
-Plots <- WormBootStrap(Ch0D,Ch1D,Ch2D,Ch3D,MaxTOF,MinLength,MaxLength,GoodIDD,NumberOfRuns,NumberOfBadWorms, NumbersOfGoodWorms,ChannelToCluster,WormStage)
+MaxTOF1 = 64000
+MinLength1 = 40
+MaxLength1 = 500
+GoodIDD1 =paste(getwd(),'/data/N2','/GoodIDsNew.csv',sep='')
+NumberOfRuns1 = 25
+NumberOfBadWorms1 = 25
+NumbersOfGoodWorms1 = c(75,65,50, 45, 25, 15, 10, 5)
+ChannelToCluster1 = 4 
+WormStage1 = 'Adult'
+Plots <- WormBootStrap(Ch0D1,Ch1D1,Ch2D1,Ch3D1,MaxTOF1,MinLength1,MaxLength1,GoodIDD1,NumberOfRuns1,NumberOfBadWorms1, NumbersOfGoodWorms1,ChannelToCluster1,WormStage1)
 #source((paste(getwd(),'/Rsrc','/','PlotAccuracy.R',sep='')))
 #plots <- PlotAccuracy(Accuracy)
 
@@ -100,9 +104,9 @@ p <- PlotAccuracy(Accuracy)
 
 Accuracy <- data.frame()
 NumberOfRuns <- 25
-SetNumber <-  c(15)
+SetNumber <-  c(75,65,50, 45, 25, 15, 10, 5)
 #SetNumber <-  c(50, 45, 25, 15, 10, 5)
-BadWormSampleSize <- 15
+BadWormSampleSize <- 45
 for (l in 1:length(SetNumber)) {
   
   for (o in 1:NumberOfRuns) {

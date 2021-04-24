@@ -1,8 +1,22 @@
-
+require(ggplot2)
 
 
 PlotAccuracy <- function(Accuracy, SetNumber, BadWormSampleSize) {
-  #create if statements to make sure everything is correct type and stuff
+
+  if(missing(Accuracy)){ 
+    stop('Missing Accuracy input')
+  } else if(missing(SetNumber)) {
+    stop('Missing SetNumber input')
+  }else if(missing(BadWormSampleSize)) {
+    stop('Missing BadWormSampleSize input')
+  } else if(typeof(Accuracy) != 'list') {
+    stop('Accuracy type is expected to be list, please provide the correct input type') 
+  } else if(typeof(SetNumber) != 'double') {
+    stop('SetNumber type is expected to be double, please provide the correct input type') 
+  } else if(typeof(BadWormSampleSize) != 'double') {
+    stop('BadWormSampleSize type is expected to be double, please provide the correct input type') 
+  }
+  
   y <- matrix()
   std <- matrix()
   NumberOfGoodWorms <- matrix()

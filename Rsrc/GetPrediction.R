@@ -1,16 +1,21 @@
 
-
+require(e1071)
 GetPrediction <- function(SetList) {
-  #create if statements to make sure everything is correct type and stuff
+
+  if(missing(SetList)){ 
+    stop('Missing SetList input')
+  }  else if(typeof(SetList) != 'list') {
+    stop('SetList type is expected to be list, please provide the correct input type') 
+  } 
   x <- lapply(SetList[[1]][,1:(ncol(SetList[[1]])-1)],as.numeric) 
   m <- as.data.frame(x)
-  y <- SetList[[1]]$Factor #make y variable(dependent)
+  y <- SetList[[1]]$Factor 
   model <- svm(m, y,type='C-classification',
                scale=TRUE,
                kernel="linear")
-  pred <- predict(model, SetList[[2]])
+  output <- predict(model, SetList[[2]])
 
-  return(pred)
+  return(output)
   
 }
 
