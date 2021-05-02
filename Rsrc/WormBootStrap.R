@@ -89,7 +89,7 @@ WormBootStrap <- function(Ch0D,Ch1D,Ch2D,Ch3D,MaxTOF, MinLength,MaxLength, GoodI
   for (l in 1:length(NumbersOfGoodWorms)) {
     for (o in 1:NumberOfRuns) {
       SetList<- RandomTrainingSet(WormData,WormIDs,NumbersOfGoodWorms[l],NumberOfBadWorms)
-      Pred <- GetPrediction(SetList)
+      Pred <- GetPrediction(SetList)[[1]]
       Positive <- rownames(SetList[[2]][which(Pred==2),])
       TP <- sum((Positive %in% WormIDs[[1]]), na.rm = TRUE)
       Negative <- rownames(SetList[[2]][which(Pred==1),])
