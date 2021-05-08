@@ -1,0 +1,23 @@
+---
+title: "WormSorter Tutorial"
+author: "Khlifa Alnaim"
+date: "5/8/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction 
+
+## How to get the package 
+
+## How to get a sample data set 
+
+## Running the pipeline (and each function )
+
+### Initial reshaping and data manipulation 
+
+### example running of the program 
+

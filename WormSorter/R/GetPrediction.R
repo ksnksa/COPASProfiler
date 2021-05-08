@@ -1,10 +1,11 @@
 #' Get prediction from a training set
 #'
 #' The function takes in a list input that has the training set data and the prediction set data. The function then
-#' runs the svm function to get a prediction and returns it to the user.
+#' runs the svm function to create the model and then runs the model against the prediction data. The function outputs
+#' both the prediction of the model, and the model itself.
 #'
 #' @param SetListr List input that has training data set and prediction data set.
-#' @return Prediction output
+#' @return List containing the prediction and the model
 #' @export
 GetPrediction <- function(SetList) {
 

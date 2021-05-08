@@ -12,9 +12,13 @@ WormCount <- function(StageData, WormIDs) {
     stop('Missing StageData input')
   }  else if(typeof(StageData) != 'list') {
     stop('StageData type is expected to be list, please provide the correct input type')
+  }  else if(missing(WormIDs)) {
+    stop('Missing WormIDs input')
+  }  else if(typeof(WormIDs) != 'list') {
+    stop('WormIDs type is expected to be list, please provide the correct input type')
   }
   BadWorms <- StageData[which(rownames(StageData) %in% WormIDs[[2]]),]
   GoodWorms <- StageData[which(rownames(StageData) %in% WormIDs[[1]]),]
-  output <- paste('Number of Good Worms: ',dim(GoodWorms)[1,],' Number of Bad Worms: ',dim(BadWorms)[1,],sep = '')
+  output <- paste('Number of Good Worms: ',dim(GoodWorms)[1],' Number of Bad Worms: ',dim(BadWorms)[1],sep = '')
   return(output)
 }
