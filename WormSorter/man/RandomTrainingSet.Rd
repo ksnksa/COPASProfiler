@@ -9,7 +9,7 @@ RandomTrainingSet(StageChannelData, WormIDs, SizeGood, SizeBad)
 \arguments{
 \item{StageChannelData}{The channel data}
 
-\item{WormIDs}{File containing the category and worm ID of the channel data.}
+\item{WormIDs}{File containing annotated worm IDs of the channel data.}
 
 \item{SizeGood}{How many good worms to be included in the training set.}
 

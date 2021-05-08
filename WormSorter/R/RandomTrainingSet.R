@@ -8,7 +8,7 @@
 #' measure the accuracy of the clustering/categorizing algorithm.
 #'
 #' @param StageChannelData The channel data
-#' @param WormIDs File containing the category and worm ID of the channel data.
+#' @param WormIDs File containing annotated worm IDs of the channel data.
 #' @param SizeGood How many good worms to be included in the training set.
 #' @param SizeBad How many bad worms to be included in the training set.
 #' @return List containing the training set and the prediction set.
