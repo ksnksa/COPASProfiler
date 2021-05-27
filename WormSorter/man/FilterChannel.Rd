@@ -4,12 +4,12 @@
 \alias{FilterChannel}
 \title{Filter channel data}
 \usage{
-FilterChannel(ch, MaxTOF, MinLength, MaxLength)
+FilterChannel(ch, MaxAmp, MinLength, MaxLength)
 }
 \arguments{
 \item{ch}{Channel data}
 
-\item{MaxTOF}{Maximum time of flight}
+\item{MaxAmp}{Maximum amplitude}
 
 \item{MinLength}{Minimum length}
 
@@ -20,5 +20,5 @@ Returns the index number of the filtered objects
 }
 \description{
 This function takes in the channel data and filters it according to the input parameters. The parameters are:
-Max Time of flight, Minimum length, and maximum length.
+Max Amplitude, Minimum length, and maximum length.
 }
