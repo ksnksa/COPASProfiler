@@ -77,7 +77,7 @@ library(WormSorter)
 
 ## Setting up the parameters 
 
-The following parameters can be changed to suit the user's needs. Ch0D, Ch1D, Ch2D, Ch3D, are the paths for each channel profile. MaxAmp, MinLength and MaxLength are parameters that control the initial filtering in this pipeline. MaxTOF is simply the maximum amplitude that an object can have. MinLength and MaxLength determine the minimum and maximum time of flight for each object. The purpose of this filtering, is to remove unwanted bubbles or artifacts. GoodIDD is the path to the annotated IDs csv file. ChannelToCluster determines which channel the pipeline will work with. 1 is for Channel 0, 2 for Channel 1 and so on. Stage determines what worm stage the program will cluster. The package assigns the stage of each worm depending on the time of travel. The thresholds for the time of travel were taken from the COPASutils package (1).
+The following parameters can be changed to suit the user's needs. Ch0D, Ch1D, Ch2D, Ch3D, are the paths for each channel profile. MaxAmp, MinLength and MaxLength are parameters that control the initial filtering in this pipeline. MaxAmp is simply the maximum amplitude that an object can have. MinLength and MaxLength determine the minimum and maximum time of flight for each object. The purpose of this filtering, is to remove unwanted bubbles or artifacts. GoodIDD is the path to the annotated IDs csv file. ChannelToCluster determines which channel the pipeline will work with. 1 is for Channel 0, 2 for Channel 1 and so on. Stage determines what worm stage the program will cluster. The package assigns the stage of each worm depending on the time of travel. The thresholds for the time of travel were taken from the COPASutils package (1).
 
 ```{r, warning=FALSE, message=FALSE}
 #Setting up the parameters we need for the analysis
@@ -129,8 +129,6 @@ Now we know the maximum number of worms in the training set is 80 annotated good
 
 ### Model testing 
 
-Before we create a model, we need to measure how well the model performs. We decided to measure the accuracy of the (true positive and negative thing). 
-
 #### BootStrap Analysis 
 
 Our goal is to have a model that has a low number of worms, high accuracy and low standard deviation (meaning it is consistent). One way to test all of that, is to use a bootstrap analysis method. Bootstrapping in this context is simply using random sampling to find the accuracy of our model.
@@ -164,7 +162,7 @@ for (l in 1:length(NumbersOfGoodWorms)) {
 
 ```
 
-##### Accuracy Plot 
+#### Accuracy Plot 
 
 We can then view our accuracy plot to gauge how well the model performs. 
 
@@ -228,7 +226,7 @@ plot(Plots[[3]])
 
 Overall, we'd like our good worms to look like this plot. A smooth curve is indicative that the worms went in straight in the COPAS sorter.   
 
-## References 
+# References 
 
 1- Article Source: COPASutils: An R Package for Reading, Processing, and Visualizing Data from COPAS Large-Particle Flow Cytometers
 Shimko TC, Andersen EC (2014) COPASutils: An R Package for Reading, Processing, and Visualizing Data from COPAS Large-Particle Flow Cytometers. PLOS ONE 9(10): e111090. https://doi.org/10.1371/journal.pone.0111090 
