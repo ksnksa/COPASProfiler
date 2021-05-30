@@ -46,21 +46,12 @@ The COPAS worm sorter outputs more than one file for each run. (NameOfRun)_profi
 We also use another csv file that contains annotated objects and their IDs. We'll be using this file to create our model. To create your own annotation, you can go to our [website](https://wormbuilder.dev/WormProfiler/).
 The website allows you to visualize the object's channel data. 
 
-```{r, warning=FALSE, message=FALSE,echo=FALSE}
-library('png')
-pp <- readPNG('C:/Users/pCd/Desktop/WormSorter/WormProfiler.png')
-plot.new() 
-rasterImage(pp,0,0,1,1)
-```
+![](https://raw.githubusercontent.com/ksnksa/WormSorter/main/WormProfiler.PNG)
 
 1: Load the four channel data files then press submit.  2: The output plot of the selected object. 3: Here you can select which object ID you'd like to view. 4: You can check which channel you'd like to be in the plot. 5: The swipe right and swipe left buttons allow you to annotate the objects. Swiping right means annotating this object as a good worm, and swiping left means annotating this object as a bad worm. After annotating any number of objects, a button will pop up to download the annotated IDs. 
 
-```{r, warning=FALSE, message=FALSE,echo=FALSE}
-library('png')
-pp <- readPNG('C:/Users/pCd/Desktop/WormSorter/Download.png')
-plot.new() 
-rasterImage(pp,0,0,1,1)
-```
+
+![](https://raw.githubusercontent.com/ksnksa/WormSorter/main/Download.PNG)
 
 # Running the pipeline 
 
