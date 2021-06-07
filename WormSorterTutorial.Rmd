@@ -18,8 +18,18 @@ output:
 ---
 
 ```{r setup, include=FALSE}
+
+#A1-5 -> All 
+#A1-5B -> All with binning
+#A1-5N -> All with amp norm 
+#A1-5BN -> All with both 
+
+
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
+
+
 
 # Introduction 
 
@@ -88,7 +98,7 @@ The following parameters can be changed to suit the user's needs. MaxAmp, MinLen
 #Setting up the parameters we need for the analysis
 # Max amplitude an object can have 
 # Anything more will be filitered out
-MaxAmp <- 64000
+MaxAmp <- 35000
 # Minimum and maximum time of flight for each object
 MinLength <- 40
 MaxLength <- 500
@@ -96,7 +106,7 @@ MaxLength <- 500
 # 1 is for Channel 0, 2 is for Channel 1 
 # 3 is for Channel 2, 4 is for Channel 3
 ChannelToCluster <- 1
-# Which stage the piepile will work on
+# Which stage the pipeline will work on
 # 1 is for L1, 2 is for L2/3 
 # 3 is for L4, 4 is for Adults
 Stage <- 4
@@ -120,17 +130,44 @@ channellist[[ChannelToCluster]] <- as.data.frame(channellist[[ChannelToCluster]]
 # The AssignStage function will take in the channel data and sorts the worms into four
 # stages (L1, L2/3, L4, Adult). 
 StageList <- AssignStage(channellist[[ChannelToCluster]])
+#Binning the TOF values to change it to 0 100
+ModifiedData <- matrix(nrow= dim(StageList[[4]])[1], ncol =100)
+for (z in 1:dim(StageList[[4]])[1]) {
+  if (max(which(StageList[[4]][z,]!=0)) < 100 ) { 
+    ModifiedData[z,] <- as.numeric(binning(StageList[[4]][z,1:100],100))
+  } else { ModifiedData[z,] <- as.numeric(binning(StageList[[4]][z,1:(max(which(StageList[[4]][z,]!=0)) + 1)],100))
+      }
+  
+
+}
+RowNames <- rownames_to_column(StageList[[4]],'ID')[,1]
+
+#ModifiedData <- StageList[[4]]
+ModData <- data.frame(ModifiedData,row.names = RowNames)
+#For normalizing the amplitude
+
+for (row in 1:dim(ModData)[1]) {
+ ModData[row,] <- rescale(as.numeric(ModData[row,]), to = c(0,100))
+}
+
 # The CreateTrainingSetIDs function translates the annotated IDs csv 
 # file to the data we have and gives out the index of the worms that are annotated.
-WormIDs <- CreateTrainingSetIDs(StageList[[Stage]],GoodIDD)
+WormIDs <- CreateTrainingSetIDs(ModData,GoodIDD)
 ```
+
+```{r}
+
+WormIDs <- CreateTrainingSetIDs(as.list(Temp),GoodIDD)
+```
+
 
 Now we need to find out how many annotated worms do we have in the stage we're interested in. 
 
 ```{r, warning=FALSE, message=FALSE}
 # Let's find how many worms are in our training set
 # WormCount returns the number of annotated good and bad worms in the stage of interest.  
-print(WormCount(StageList[[Stage]],WormIDs))
+#print(WormCount(channellist[[ChannelToCluster]],WormIDs))
+print(WormCount(ModData,WormIDs))
 ```
 
 Now we know the maximum number of worms in the training set is 80 annotated good worms and 76 bad worms. 
@@ -144,10 +181,13 @@ NumberOfBadWorms is how many bad worms will be in the training set and it can on
 
 ```{r}
 # How many bad worms will be picked to make the training set
-NumberOfBadWorms  = 30
+#NumberOfBadWorms  = c(68,60,38, 23, 8 )
+NumberOfBadWorms  = c(25,22,15,9, 3)
 # How many good worms will be picked to make the training set 
 # Can be a vector of different numbers
-NumbersOfGoodWorms  = c(70,60,50,40,30,20,10)
+# 90%, %80, %50,%30, %10
+#NumbersOfGoodWorms  = c( 72, 64,40, 24, 8 )
+NumbersOfGoodWorms  = c( 71, 63,40, 24, 8)
 # How many times the bootstrap loop will run 
 NumberOfRuns  = 100
 ```
@@ -161,18 +201,21 @@ Feel free to use any other method to find the accuracy of your model.
 
 ```{r, warning=FALSE, message=FALSE}
 
-Accuracy <- data.frame()
+#Accuracy <- data.frame()
+Accuracy <- list(data.frame(),data.frame(),data.frame(),data.frame(),data.frame())
+for (k in 1:length(NumberOfBadWorms)) {
 for (l in 1:length(NumbersOfGoodWorms)) {
   for (o in 1:NumberOfRuns) {
-    SetList<- RandomTrainingSet(StageList[[Stage]],WormIDs,NumbersOfGoodWorms[l],NumberOfBadWorms)
+    SetList<- RandomTrainingSet(ModData,WormIDs,NumbersOfGoodWorms[l],NumberOfBadWorms[k])
     Pred <- GetPrediction(SetList)[[1]]
     Positive <- rownames(SetList[[2]][which(Pred==2),])
     TP <- sum((Positive %in% WormIDs[[1]]), na.rm = TRUE)
     Negative <- rownames(SetList[[2]][which(Pred==1),])
     TN <- length(Negative %in% WormIDs[[2]]) - sum((Negative %in% WormIDs[[1]]), na.rm = TRUE)
-    Accuracy[l,o] <- (TP + TN) / (length(Positive) + length(Negative))
+    Accuracy[[k]][l,o] <- (TP + TN) / (length(Positive) + length(Negative))
   }
 
+}
 }
 
 ```
@@ -182,9 +225,18 @@ for (l in 1:length(NumbersOfGoodWorms)) {
 We can then view our accuracy plot to gauge how well the model performs. 
 
 ```{r}
-p <- PlotAccuracy(Accuracy, NumbersOfGoodWorms, NumberOfBadWorms)
+p <- list()
+for (k in 1:length(NumberOfBadWorms)) {
+  p[[k]] <- PlotAccuracy(Accuracy[[k]], NumbersOfGoodWorms, NumberOfBadWorms[k])
+}
+#p <- PlotAccuracy(Accuracy, NumbersOfGoodWorms, NumberOfBadWorms)
 ## view the accuracy plot to get a sense of your model's efficiency
-plot(p)
+#plot(p)
+plot(p[[1]])
+plot(p[[2]])
+plot(p[[3]])
+plot(p[[4]])
+plot(p[[5]])
 ```
 
 It looks like the model performs best when the number of good worms and bad worms is 30.  
@@ -201,14 +253,14 @@ ModelGood <- 30
 ModelBad <- 30
 # RandomTrainingSet creates a training set out of the following parameters: 
 # The channel data, annotated worm IDs and how many good and bad worms will be in the model. 
-SetList<- RandomTrainingSet(StageList[[Stage]],WormIDs,ModelGood,ModelBad)
+SetList<- RandomTrainingSet(ModData,WormIDs,ModelGood,ModelBad)
 
 # CreateModel takes in the training set to create a model.
 model <- CreateModel(SetList[[2]])
 # RunModel runs the model againts the inputted channel data 
 # and outputs the clustering prediction. 
 # To run the model against another data set, simply change the StageList[[Stage]] variable. 
-Pred <- RunModel(StageList[[Stage]], model)
+Pred <- RunModel(ModData, model)
 ```
 
 #### Prediction Plots 
@@ -220,7 +272,7 @@ Now we can plot the results of the clustering.
 # PlotPred takes in the prediction and the channel data to output three plots: 
 # A plot with all the worms in the channel data, 
 # a plot with the clustered bad worms and a plot with the clustered good worms. 
-Plots <- PlotPred(Pred, StageList[[Stage]])
+Plots <- PlotPred(Pred, ModData)
 # To view them we can simply use the plot function
 # Plot 1: The over all plot of all the worms
 plot(Plots[[1]])
