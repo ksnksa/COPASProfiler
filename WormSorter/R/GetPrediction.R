@@ -22,7 +22,7 @@ GetPrediction <- function(SetList) {
   m <- as.data.frame(x)
   y <- SetList[[1]]$Factor
   model <- svm(m, y,type='C-classification',
-               scale=TRUE,
+               scale=FALSE,
                kernel="linear")
   output <- list()
   output[[1]] <- predict(model, SetList[[2]])
