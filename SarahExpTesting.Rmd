@@ -77,6 +77,7 @@ library(WormSorter)
 library(tibble)
 library(prospectr)
 library(scales)
+library(NbClust)
 ```
 
 ## Loading the data 
@@ -214,7 +215,9 @@ Now we know the maximum number of worms in the training set is 80 annotated good
 
 
 ```{r}
-m <- 2
+
+    cn <- NbClust(data = TrainingSet, diss = NULL, distance = "euclidean", min.nc = 2, max.nc = 20,method = "ward.D", index = "ball") 
+m <-  as.numeric(cn$Best.nc[1])
  ClusterList <- list()
     datafr_dist <- dist(TrainingSet, method ="euclidean")
     fit <- hclust(datafr_dist, method="ward.D")
@@ -229,7 +232,7 @@ m <- 2
 ```{r}
 #Finding the accuracy for each cluster in clustering good worms and bad worms 
 Clusters <- 1:m
-Accuracy <- matrix(nrow = m, ncol = 2)
+Accuracy <- matrix(nrow = m, ncol = 3)
 tempcounter <- 1
 for (x in Clusters) { 
     Positive <- ClusterList[ which(ClusterList[,2] == x),1] #The ids in each cluster
@@ -245,7 +248,8 @@ for (x in Clusters) {
     } 
    
     TN <- length(Negative %in% WormIDs[[2]]) - sum((Negative %in% WormIDs[[1]]), na.rm = TRUE)
-    Accuracy[x,] <- c(TP, TN)
+    Accuracy[x,1:2] <- c(TP, TN)
+    Accuracy[x,3] <- as.numeric((TP + TN) / (length(Positive) + length(Negative)))
   }
  
 ```
