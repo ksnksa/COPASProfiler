@@ -72,6 +72,9 @@ library(e1071)
 library(ggplot2)
 library(reshape)
 library(WormSorter)
+library(tibble)
+library(prospectr)
+library(scales)
 ```
 
 ## Loading the data 
@@ -129,20 +132,20 @@ Index <- FilterChannel(channellist[[ChannelToCluster]],MaxAmp,MinLength,MaxLengt
 channellist[[ChannelToCluster]] <- as.data.frame(channellist[[ChannelToCluster]][-c(Index),])
 # The AssignStage function will take in the channel data and sorts the worms into four
 # stages (L1, L2/3, L4, Adult). 
-StageList <- AssignStage(channellist[[ChannelToCluster]])
+#StageList <- AssignStage(channellist[[ChannelToCluster]])
 #Binning the TOF values to change it to 0 100
-ModifiedData <- matrix(nrow= dim(StageList[[4]])[1], ncol =100)
-for (z in 1:dim(StageList[[4]])[1]) {
-  if (max(which(StageList[[4]][z,]!=0)) < 100 ) { 
-    ModifiedData[z,] <- as.numeric(binning(StageList[[4]][z,1:100],100))
-  } else { ModifiedData[z,] <- as.numeric(binning(StageList[[4]][z,1:(max(which(StageList[[4]][z,]!=0)) + 1)],100))
+ModifiedData <- matrix(nrow= dim(channellist[[ChannelToCluster]])[1], ncol =100)
+for (z in 1:dim(channellist[[ChannelToCluster]])[1]) {
+  if (max(which(channellist[[ChannelToCluster]][z,]!=0)) < 100 ) { 
+    ModifiedData[z,] <- as.numeric(binning(channellist[[ChannelToCluster]][z,1:100],100))
+  } else { ModifiedData[z,] <- as.numeric(binning(channellist[[ChannelToCluster]][z,1:(max(which(channellist[[ChannelToCluster]][z,]!=0)) + 1)],100))
       }
   
 
 }
-RowNames <- rownames_to_column(StageList[[4]],'ID')[,1]
+RowNames <- rownames_to_column(channellist[[ChannelToCluster]],'ID')[,1]
 
-#ModifiedData <- StageList[[4]]
+ModifiedData <- channellist[[ChannelToCluster]]
 ModData <- data.frame(ModifiedData,row.names = RowNames)
 #For normalizing the amplitude
 
@@ -155,9 +158,11 @@ for (row in 1:dim(ModData)[1]) {
 WormIDs <- CreateTrainingSetIDs(ModData,GoodIDD)
 ```
 
+###Loading SAH data
 ```{r}
-
-WormIDs <- CreateTrainingSetIDs(as.list(Temp),GoodIDD)
+load('/home/ksnksa/Desktop/git/WormSorter/ModDataAllStages.RData')
+GoodIDD <- '/home/ksnksa/Desktop/git/WormSorter/GoodIDsSAH.csv'
+WormIDs <- CreateTrainingSetIDs(ModData,GoodIDD)
 ```
 
 
@@ -166,7 +171,6 @@ Now we need to find out how many annotated worms do we have in the stage we're i
 ```{r, warning=FALSE, message=FALSE}
 # Let's find how many worms are in our training set
 # WormCount returns the number of annotated good and bad worms in the stage of interest.  
-#print(WormCount(channellist[[ChannelToCluster]],WormIDs))
 print(WormCount(ModData,WormIDs))
 ```
 
@@ -181,13 +185,23 @@ NumberOfBadWorms is how many bad worms will be in the training set and it can on
 
 ```{r}
 # How many bad worms will be picked to make the training set
+#All N2
 #NumberOfBadWorms  = c(68,60,38, 23, 8 )
-NumberOfBadWorms  = c(25,22,15,9, 3)
+#Adults N2
+#NumberOfBadWorms <- c(25,22,15,9,3)
+NumberOfBadWorms  = c(666,592,370,222, 74)
+#NumberOfBadWorms <- c(15,13,8,5,2)
+#NumberOfBadWorms <- c(20,15,10,5)
+
 # How many good worms will be picked to make the training set 
 # Can be a vector of different numbers
 # 90%, %80, %50,%30, %10
-#NumbersOfGoodWorms  = c( 72, 64,40, 24, 8 )
-NumbersOfGoodWorms  = c( 71, 63,40, 24, 8)
+NumbersOfGoodWorms  = c(180,160,100,60,20 )
+#NumbersOfGoodWorms  = c( 50,45,28,17,6)
+#Adults N2
+#NumbersOfGoodWorms <- c(71,63,40,24,8)
+#All N2
+#NumbersOfGoodWorms <- c(72,64,40,24,8)
 # How many times the bootstrap loop will run 
 NumberOfRuns  = 100
 ```
@@ -200,18 +214,21 @@ You can find how I calculated the accuracy in this [picture](https://raw.githubu
 Feel free to use any other method to find the accuracy of your model. 
 
 ```{r, warning=FALSE, message=FALSE}
+ BadWorms <- ModData[which(rownames(ModData) %in% WormIDs[[2]]),]
+ GoodWorms <- ModData[which(rownames(ModData) %in% WormIDs[[1]]),]
+ TrainingSet <- as.data.frame(rbind(BadWorms,GoodWorms))
 
 #Accuracy <- data.frame()
 Accuracy <- list(data.frame(),data.frame(),data.frame(),data.frame(),data.frame())
 for (k in 1:length(NumberOfBadWorms)) {
 for (l in 1:length(NumbersOfGoodWorms)) {
   for (o in 1:NumberOfRuns) {
-    SetList<- RandomTrainingSet(ModData,WormIDs,NumbersOfGoodWorms[l],NumberOfBadWorms[k])
-    Pred <- GetPrediction(SetList)[[1]]
+    SetList<- RandomTrainingSet(TrainingSet,WormIDs,NumbersOfGoodWorms[l],NumberOfBadWorms[k])
+   Pred <- GetPrediction(SetList)[[1]]
     Positive <- rownames(SetList[[2]][which(Pred==2),])
     TP <- sum((Positive %in% WormIDs[[1]]), na.rm = TRUE)
     Negative <- rownames(SetList[[2]][which(Pred==1),])
-    TN <- length(Negative %in% WormIDs[[2]]) - sum((Negative %in% WormIDs[[1]]), na.rm = TRUE)
+    TN <- sum(Negative %in% WormIDs[[2]],na.rm = TRUE)# - sum((Negative %in% WormIDs[[1]]), na.rm = TRUE)
     Accuracy[[k]][l,o] <- (TP + TN) / (length(Positive) + length(Negative))
   }
 
