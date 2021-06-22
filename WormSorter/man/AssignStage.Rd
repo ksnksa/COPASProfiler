@@ -10,9 +10,9 @@ AssignStage(Channel)
 \item{Channel}{Channel data}
 }
 \value{
-A list with 4 stages of worms
+A list with 6 stages of worms
 }
 \description{
-The function takes in the channel data and sorts the worms into four different stages (L1, L2/3, L4, Adult)
+The function takes in the channel data and sorts the worms into six different stages (L1, L2,L3, L4,Young Adult, Adult)
 depending on their size.
 }
