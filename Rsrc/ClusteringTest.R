@@ -127,4 +127,9 @@ for(c in 1:3) {
   }
   
 }
-###
+### to plot things
+for (x in 1:length(p)) {
+  png(paste('Adult',x,'.png',sep = ''))
+  plot(p[[x]])
+  dev.off()
+}
