@@ -16,9 +16,9 @@ CreateModel <- function(TrainingSet) {
     library("e1071")
   }
 
-  x <- lapply(SetList[[1]][,1:(ncol(SetList[[1]])-1)],as.numeric)
+  x <- lapply(TrainingSet[,1:(ncol(TrainingSet)-1)],as.numeric)
   m <- as.data.frame(x)
-  y <- SetList[[1]]$Factor
+  y <- TrainingSet$Factor
   Model <- svm(m, y,type='C-classification',
                scale=TRUE,
                kernel="linear")
