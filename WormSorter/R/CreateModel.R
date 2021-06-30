@@ -16,11 +16,10 @@ CreateModel <- function(TrainingSet) {
     library("e1071")
   }
 
-  x <- lapply(TrainingSet[,1:(ncol(TrainingSet)-1)],as.numeric)
-  m <- as.data.frame(x)
-  y <- TrainingSet$Factor
-  Model <- svm(m, y,type='C-classification',
-               scale=TRUE,
+  Factor <- as.double(TrainingSet[,dim(TrainingSet)[2]])
+  Model <- svm(Factor~.,data = TrainingSet,
+               type = 'C-classification',
+               scale=FALSE,
                kernel="linear")
   return(Model)
 

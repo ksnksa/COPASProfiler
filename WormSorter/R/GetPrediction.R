@@ -17,11 +17,10 @@ GetPrediction <- function(SetList) {
   if(!require("e1071")){
     library("e1071")
   }
-
-  x <- lapply(SetList[[1]][,1:(ncol(SetList[[1]])-1)],as.numeric)
-  m <- as.data.frame(x)
-  y <- SetList[[1]]$Factor
-  model <- svm(m, y,type='C-classification',
+  TrainingSet <- SetList[[1]]
+  Factor <- as.double(TrainingSet[,dim(TrainingSet)[2]])
+  model <- svm(Factor~.,data = TrainingSet,
+               type = 'C-classification',
                scale=FALSE,
                kernel="linear")
   output <- list()
