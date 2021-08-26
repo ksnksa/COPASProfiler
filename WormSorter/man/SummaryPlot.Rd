@@ -2,9 +2,15 @@
 % Please edit documentation in R/SummaryPlot.R
 \name{SummaryPlot}
 \alias{SummaryPlot}
-\title{Plots the provided Worm sorter output file}
+\title{Plots the provided worm sorter output file (x Axis is Time of Flight and Y Axis is the amplitude of fluorescence)}
 \usage{
-SummaryPlot(FileDirectory, Name, FluorescenceChannel, IDsFile)
+SummaryPlot(
+  FileDirectory,
+  Name,
+  FluorescenceChannel,
+  IDsFile,
+  Ranges = c(50, 75, 150, 225, 500, 800)
+)
 }
 \arguments{
 \item{FileDirectory}{Directory to the worm sorter summary output file.}
@@ -13,14 +19,18 @@ SummaryPlot(FileDirectory, Name, FluorescenceChannel, IDsFile)
 
 \item{FluorescenceChannel}{Which channel to plot: G is green, R is red, and Y is yellow.}
 
-\item{IDsFile}{Optional input: Directory to the annotated IDs file to remove the specified bad worms from the data set.}
+\item{IDsFile}{Optional input: Directory to csv file containing IDs of objects to be removed from data set before plotting.}
+
+\item{Ranges}{The TOF ranges to group the objects with. Default is 50,75,150,225,500,800.}
 }
 \value{
-Returns 6 plots in  a list.
+Returns a summary boxplot of the fluorescence.
 }
 \description{
 The function takes in the data set directory, the name of the strain and plots the desired fluorescence channel.
-The IDsFile parameter is optional. If the user provides it, the function will remove the bad worms from the
-data set before plotting. The function returns five plots: 1- Worms with TOF from 50-75 2- Worms with TOF 75-150
-3- Worms with TOF 150-225 4- Worms with TOF 225-500 5- Worms with TOF from 500-800 6- Box plot of the five TOF groups
+The function separates the objects in the data set based on their Time of Flight (TOF) and the Ranges input (the default is 50,75,150,225,500,800)
+and returns 5 plots of the objects between those ranges. The user can also provide specific ranges instead.
+The function also returns a sixth boxplot containing a summary of the grouped objects.
+The user can also remove specific objects by providing the optional input: IDsFile which is a csv file containing the IDs of the objects
+the user wants to remove from the data set.
 }

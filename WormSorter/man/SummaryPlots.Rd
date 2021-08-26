@@ -14,7 +14,7 @@ SummaryPlots(FileDirectories, Names, FluorescenceChannel)
 \item{FluorescenceChannel}{Which channel to plot: G is green, R is red, and Y is yellow.}
 }
 \value{
-Returns a summary boxplot of the fluoresence.
+Returns a summary boxplot of the fluorescence.
 }
 \description{
 The function takes in the data set directories, the names of the strains and plots the desired fluorescence channel.

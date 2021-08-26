@@ -1,15 +1,15 @@
 #' Plots the provided worm sorter output files into a summary boxplot
 #'
 #' The function takes in the data set directories, the names of the strains and plots the desired fluorescence channel.
-#' The boxplot provides a summary of the amplitude of the fluorescence of each strain. 
-#' 
+#' The boxplot provides a summary of the amplitude of the fluorescence of each strain.
+#'
 #' @param FileDirectories Directories to the worm sorter summary output file. In the format of <- c('Directory1','Directory2') and so on.
 #' @param Names Names of the strains that will be used in the plots. In the format of <- c('Name1','Name2') and so on.
-#' @param FluorescenceChannel Which channel to plot: G is green, R is red, and Y is yellow. 
-#' 
-#' @return Returns a summary boxplot of the fluoresence. 
+#' @param FluorescenceChannel Which channel to plot: G is green, R is red, and Y is yellow.
+#'
+#' @return Returns a summary boxplot of the fluorescence.
 #' @export
-SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel) { 
+SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel) {
   if(missing(FileDirectories)){
     stop('Missing FileDirectories input')
   }  else if(typeof(FileDirectories) != 'character') {
@@ -32,11 +32,11 @@ SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel) {
     library("reshape2")
   }
   ChannelSummary <- list()
-  for (x in 1:length(FileDirectories)) { 
+  for (x in 1:length(FileDirectories)) {
     ChannelSummary[[x]] <- read.delim(FileDirectories[x], header=TRUE)
   }
   DataList <- list()
-  for (z in 1:length(ChannelSummary)) { 
+  for (z in 1:length(ChannelSummary)) {
     IDTOF <- matrix(nrow=which.max(ChannelSummary[[z]][,1]),ncol=8)
     IDTOF <- data.frame(IDTOF)
     colnames(IDTOF) <- c('ID','TOF','EXT','G','Y','R','PH.EXT','Stage')
@@ -50,44 +50,53 @@ SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel) {
     Stages <- c('50-75','75-150','150-225','225-500','500-800')
     for (x in 1:dim(IDTOF)[1]) {
       if (as.numeric(IDTOF[x,'TOF']) < 50) {IDTOF[x,'Stage'] <- 'TooSmall'}
-      
+
       else if (as.numeric(IDTOF[x,'TOF']) >= 50 & as.numeric(IDTOF[x,'TOF']) < 75) {IDTOF[x,'Stage'] <- Stages[1]}
-      else if (as.numeric(IDTOF[x,'TOF']) >= 75 & as.numeric(IDTOF[x,'TOF']) < 150) {IDTOF[x,'Stage'] <- Stages[2]} 
-      else if (as.numeric(IDTOF[x,'TOF']) >= 150 & as.numeric(IDTOF[x,'TOF']) < 225) {IDTOF[x,'Stage'] <- Stages[3]} 
-      else if (as.numeric(IDTOF[x,'TOF']) >= 225 & as.numeric(IDTOF[x,'TOF']) < 500) {IDTOF[x,'Stage'] <- Stages[4]} 
-      else if (as.numeric(IDTOF[x,'TOF']) >= 500 & as.numeric(IDTOF[x,'TOF']) <= 800) {IDTOF[x,'Stage'] <- Stages[5]} 
+      else if (as.numeric(IDTOF[x,'TOF']) >= 75 & as.numeric(IDTOF[x,'TOF']) < 150) {IDTOF[x,'Stage'] <- Stages[2]}
+      else if (as.numeric(IDTOF[x,'TOF']) >= 150 & as.numeric(IDTOF[x,'TOF']) < 225) {IDTOF[x,'Stage'] <- Stages[3]}
+      else if (as.numeric(IDTOF[x,'TOF']) >= 225 & as.numeric(IDTOF[x,'TOF']) < 500) {IDTOF[x,'Stage'] <- Stages[4]}
+      else if (as.numeric(IDTOF[x,'TOF']) >= 500 & as.numeric(IDTOF[x,'TOF']) <= 800) {IDTOF[x,'Stage'] <- Stages[5]}
       else if (as.numeric(IDTOF[x,'TOF']) > 800) {IDTOF[x,'Stage'] <- 'TooBig'}
-    } 
-    for (x in 1:dim(IDTOF)[1]) { 
+    }
+    for (x in 1:dim(IDTOF)[1]) {
       IDTOF[x,'ID'] <- paste('X',IDTOF[x,'ID'],sep='')
     }
-    #Removing worms with amplitude of 35000 or higher 
-    #Removing worms that are not in the size we care about 
+    #Removing worms with amplitude of 35000 or higher
+    #Removing worms that are not in the size we care about
     IDTOF <- IDTOF[-which(IDTOF[,'Stage'] == 'TooSmall'),]
     IDTOF <- IDTOF[-which(IDTOF[,'Stage'] == 'TooBig'),]
     IDTOF <- IDTOF[-which(IDTOF[,'PH.EXT'] > 35000),]
     DataList[[z]] <- IDTOF
   }
-  
-  
-  for (x in 1:length(DataList)) { 
+
+
+  for (x in 1:length(DataList)) {
     if (x == 1) {  maxrow <- dim(DataList[[x]])[1]}
-    
-    if (maxrow < dim(DataList[[x]])[1]) { 
+
+    if (maxrow < dim(DataList[[x]])[1]) {
       maxrow <- dim(DataList[[x]])[1]}
   }
   temp <- matrix(nrow=maxrow, ncol= length(DataList))
   temp <- as.data.frame(temp)
   colnames(temp) <- Names
-  for (x in 1:length(DataList)) { 
+
+  if (FluorescenceChannel == 'G') {
+    ChannelName <- 'Green'
+  } else if ((FluorescenceChannel == 'R')) {
+    ChannelName <- 'Red'
+  } else if ((FluorescenceChannel == 'Y')) {
+    ChannelName <- 'Yellow'
+  }
+
+  for (x in 1:length(DataList)) {
     temp[1:dim(DataList[[x]])[1],Names[x]] <- DataList[[x]][1:dim(DataList[[x]])[1],FluorescenceChannel]
   }
-  output <- ggplot(data = melt(temp), aes(x=variable,y=value)) + 
-    geom_boxplot(aes(fill=variable)) + 
-    ggtitle('Summary') +
-    xlab('Strains') + 
+  output <- ggplot(data = melt(temp), aes(x=variable,y=value)) +
+    geom_boxplot(aes(fill=variable)) +
+    ggtitle(paste('Summary of The ',ChannelName, ' Channel', sep = '')) +
+    xlab('Strains') +
     ylab('Fluorescence (A.U)') +
-    theme(plot.title = element_text(hjust = 0.5)) + 
+    theme(plot.title = element_text(hjust = 0.5)) +
     guides(fill=guide_legend(title='Strains'))
 return(output)
 }
