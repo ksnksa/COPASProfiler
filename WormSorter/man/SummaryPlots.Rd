@@ -4,7 +4,15 @@
 \alias{SummaryPlots}
 \title{Plots the provided worm sorter output files into a summary boxplot}
 \usage{
-SummaryPlots(FileDirectories, Names, FluorescenceChannel)
+SummaryPlots(
+  FileDirectories,
+  Names,
+  FluorescenceChannel,
+  Classify = "NA",
+  Measure = "I",
+  Scale = "Normal",
+  TypeOfData = "Summary"
+)
 }
 \arguments{
 \item{FileDirectories}{Directories to the worm sorter summary output file. In the format of <- c('Directory1','Directory2') and so on.}

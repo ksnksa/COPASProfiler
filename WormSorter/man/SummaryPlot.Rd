@@ -8,8 +8,11 @@ SummaryPlot(
   FileDirectory,
   Name,
   FluorescenceChannel,
-  IDsFile,
-  Ranges = c(50, 75, 150, 225, 500, 800)
+  Ranges = c(50, 75, 150, 225, 500, 800),
+  TypeOfData = "Summary",
+  Measure = "I",
+  Scale = "Normal",
+  WormIDs = "NA"
 )
 }
 \arguments{
@@ -19,9 +22,9 @@ SummaryPlot(
 
 \item{FluorescenceChannel}{Which channel to plot: G is green, R is red, and Y is yellow.}
 
-\item{IDsFile}{Optional input: Directory to csv file containing IDs of objects to be removed from data set before plotting.}
-
 \item{Ranges}{The TOF ranges to group the objects with. Default is 50,75,150,225,500,800.}
+
+\item{IDsFile}{Optional input: Directory to csv file containing IDs of objects to be removed from data set before plotting.}
 }
 \value{
 Returns a summary boxplot of the fluorescence.

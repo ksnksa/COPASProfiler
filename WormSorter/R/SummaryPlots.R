@@ -9,7 +9,7 @@
 #'
 #' @return Returns a summary boxplot of the fluorescence.
 #' @export
-SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel) {
+SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = 'NA',Measure = 'I',Scale = 'Normal',TypeOfData = 'Summary') {
   if(missing(FileDirectories)){
     stop('Missing FileDirectories input')
   }  else if(typeof(FileDirectories) != 'character') {
@@ -32,42 +32,164 @@ SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel) {
     library("reshape2")
   }
   ChannelSummary <- list()
-  for (x in 1:length(FileDirectories)) {
-    ChannelSummary[[x]] <- read.delim(FileDirectories[x], header=TRUE)
-  }
   DataList <- list()
-  for (z in 1:length(ChannelSummary)) {
-    IDTOF <- matrix(nrow=which.max(ChannelSummary[[z]][,1]),ncol=8)
-    IDTOF <- data.frame(IDTOF)
-    colnames(IDTOF) <- c('ID','TOF','EXT','G','Y','R','PH.EXT','Stage')
-    IDTOF[,1] <- ChannelSummary[[z]][1:dim(IDTOF)[1],1]
-    IDTOF[,2] <- ChannelSummary[[z]][1:dim(IDTOF)[1],10]
-    IDTOF[,3] <- ChannelSummary[[z]][1:dim(IDTOF)[1],11]
-    IDTOF[,4] <- ChannelSummary[[z]][1:dim(IDTOF)[1],12]
-    IDTOF[,5] <- ChannelSummary[[z]][1:dim(IDTOF)[1],13]
-    IDTOF[,6] <- ChannelSummary[[z]][1:dim(IDTOF)[1],14]
-    IDTOF[,7] <- ChannelSummary[[z]][1:dim(IDTOF)[1],15]
-    Stages <- c('50-75','75-150','150-225','225-500','500-800')
-    for (x in 1:dim(IDTOF)[1]) {
-      if (as.numeric(IDTOF[x,'TOF']) < 50) {IDTOF[x,'Stage'] <- 'TooSmall'}
+  if (TypeOfData == 'Summary') {
+    for (x in 1:length(FileDirectories)) {
+      ChannelSummary[[x]] <- read.delim(FileDirectories[x], header=TRUE)
+    }
 
-      else if (as.numeric(IDTOF[x,'TOF']) >= 50 & as.numeric(IDTOF[x,'TOF']) < 75) {IDTOF[x,'Stage'] <- Stages[1]}
-      else if (as.numeric(IDTOF[x,'TOF']) >= 75 & as.numeric(IDTOF[x,'TOF']) < 150) {IDTOF[x,'Stage'] <- Stages[2]}
-      else if (as.numeric(IDTOF[x,'TOF']) >= 150 & as.numeric(IDTOF[x,'TOF']) < 225) {IDTOF[x,'Stage'] <- Stages[3]}
-      else if (as.numeric(IDTOF[x,'TOF']) >= 225 & as.numeric(IDTOF[x,'TOF']) < 500) {IDTOF[x,'Stage'] <- Stages[4]}
-      else if (as.numeric(IDTOF[x,'TOF']) >= 500 & as.numeric(IDTOF[x,'TOF']) <= 800) {IDTOF[x,'Stage'] <- Stages[5]}
-      else if (as.numeric(IDTOF[x,'TOF']) > 800) {IDTOF[x,'Stage'] <- 'TooBig'}
+    if (Measure == 'I') {
+      ColumnNumber <- c(12,13,14)
+    } else if (Measure == 'W') {
+      ColumnNumber <- c(19,22,25)
+    } else if (Measure == 'H') {
+      ColumnNumber <- c(18,21,24)
+    } else {
+      stop('Incorrect Measure input')
     }
-    for (x in 1:dim(IDTOF)[1]) {
-      IDTOF[x,'ID'] <- paste('X',IDTOF[x,'ID'],sep='')
+    if (Classify == 'NA') {
+
+    } else {
+      print('Classification was not perfomed due to input data type -Summary File-')
+
     }
-    #Removing worms with amplitude of 35000 or higher
-    #Removing worms that are not in the size we care about
-    IDTOF <- IDTOF[-which(IDTOF[,'Stage'] == 'TooSmall'),]
-    IDTOF <- IDTOF[-which(IDTOF[,'Stage'] == 'TooBig'),]
-    IDTOF <- IDTOF[-which(IDTOF[,'PH.EXT'] > 35000),]
-    DataList[[z]] <- IDTOF
+    for (z in 1:length(ChannelSummary)) {
+      IDTOF <- matrix(nrow=which.max(ChannelSummary[[z]][,1]),ncol=8)
+      IDTOF <- data.frame(IDTOF)
+      colnames(IDTOF) <- c('ID','TOF','EXT','G','Y','R','PH.EXT','Stage')
+      IDTOF[,1] <- ChannelSummary[[z]][1:dim(IDTOF)[1],1]
+      IDTOF[,2] <- ChannelSummary[[z]][1:dim(IDTOF)[1],10]
+      IDTOF[,3] <- ChannelSummary[[z]][1:dim(IDTOF)[1],11]
+      IDTOF[,4] <- ChannelSummary[[z]][1:dim(IDTOF)[1],ColumnNumber[1]]
+      IDTOF[,5] <- ChannelSummary[[z]][1:dim(IDTOF)[1],ColumnNumber[2]]
+      IDTOF[,6] <- ChannelSummary[[z]][1:dim(IDTOF)[1],ColumnNumber[3]]
+      IDTOF[,7] <- ChannelSummary[[z]][1:dim(IDTOF)[1],15]
+
+
+
+      Stages <- c('50-75','75-150','150-225','225-500','500-800')
+      for (x in 1:dim(IDTOF)[1]) {
+        if (as.numeric(IDTOF[x,'TOF']) < 50) {IDTOF[x,'Stage'] <- 'TooSmall'}
+
+        else if (as.numeric(IDTOF[x,'TOF']) >= 50 & as.numeric(IDTOF[x,'TOF']) < 75) {IDTOF[x,'Stage'] <- Stages[1]}
+        else if (as.numeric(IDTOF[x,'TOF']) >= 75 & as.numeric(IDTOF[x,'TOF']) < 150) {IDTOF[x,'Stage'] <- Stages[2]}
+        else if (as.numeric(IDTOF[x,'TOF']) >= 150 & as.numeric(IDTOF[x,'TOF']) < 225) {IDTOF[x,'Stage'] <- Stages[3]}
+        else if (as.numeric(IDTOF[x,'TOF']) >= 225 & as.numeric(IDTOF[x,'TOF']) < 500) {IDTOF[x,'Stage'] <- Stages[4]}
+        else if (as.numeric(IDTOF[x,'TOF']) >= 500 & as.numeric(IDTOF[x,'TOF']) <= 800) {IDTOF[x,'Stage'] <- Stages[5]}
+        else if (as.numeric(IDTOF[x,'TOF']) > 800) {IDTOF[x,'Stage'] <- 'TooBig'}
+      }
+      for (x in 1:dim(IDTOF)[1]) {
+        IDTOF[x,'ID'] <- paste('X',IDTOF[x,'ID'],sep='')
+      }
+      #Removing worms with amplitude of 35000 or higher
+      #Removing worms that are not in the size we care about
+      IDTOF <- IDTOF[-which(IDTOF[,'Stage'] == 'TooSmall'),]
+      IDTOF <- IDTOF[-which(IDTOF[,'Stage'] == 'TooBig'),]
+      IDTOF <- IDTOF[-which(IDTOF[,'PH.EXT'] > 35000),]
+      DataList[[z]] <- IDTOF
+    }
+
+
+
+
+
+
+  } else if (TypeOfData == 'FullFile') {
+    for (z in 1:length(FileDirectories)) {
+      FullFile <- read.delim(FileDirectories[z])
+      NewCh0 <- FullFile
+      for (x in 1:dim(FullFile)[1]) {
+        NewCh0[,x] <- na.omit(FullFile[,x])
+
+      }
+
+      x <- NewCh0[,-which(grepl('.', colnames(NewCh0), fixed = TRUE))]
+      ChExt <- t(x)
+      ChExt <- ChExt[-dim(ChExt)[1],]
+      IDTOF <- matrix(nrow=dim(ChExt)[1],ncol=8)
+      IDTOF <- data.frame(IDTOF)
+      colnames(IDTOF) <- c('ID','TOF','EXT','G','Y','R','PH.EXT','Stage')
+      x <- NewCh0[,which(grepl('.1', colnames(NewCh0), fixed = TRUE))]
+      Ch1 <- t(x)
+      #Ch1 <- Ch1[-dim(Ch1)[1],]
+      rownames(Ch1) <- str_replace(rownames(Ch1),fixed('.1'),'')
+      x <- NewCh0[,which(grepl('.2', colnames(NewCh0), fixed = TRUE))]
+      Ch2 <- t(x)
+      #Ch2 <- Ch2[-dim(Ch2)[1],]
+      rownames(Ch2) <- str_replace(rownames(Ch2),fixed('.2'),'')
+      x <- NewCh0[,which(grepl('.3', colnames(NewCh0), fixed = TRUE))]
+      Ch3 <- t(x)
+
+      #  Ch3 <- Ch3[-dim(Ch3)[1],]
+      rownames(Ch3) <- str_replace(rownames(Ch3),fixed('.3'),'')
+      IDTOF[,'ID'] <- rownames(ChExt)
+      for (x in 1:dim(ChExt)[1]) {
+        IDTOF[x,'TOF'] <- which.min(ChExt[x,])
+      }
+      if (Measure == 'I') {
+        for (x in 1:dim(ChExt)[1]) {
+          IDTOF[x,'EXT'] <- as.numeric(trapz(1:which.min(ChExt[x,]), ChExt[x,1:which.min(ChExt[x,])]))
+          IDTOF[x,'G'] <- as.numeric(trapz(1:which.min(Ch1[x,]), Ch1[x,1:which.min(Ch1[x,])]))
+          IDTOF[x,'Y'] <- as.numeric(trapz(1:which.min(Ch2[x,]), Ch2[x,1:which.min(Ch2[x,])]))
+          IDTOF[x,'R'] <- as.numeric(trapz(1:which.min(Ch3[x,]), Ch3[x,1:which.min(Ch3[x,])]))
+          IDTOF[x,'PH.EXT'] <-  max(ChExt[x,])
+        }
+
+
+      } else if (Measure == 'W') {
+        stop('Measure type not currently supported')
+      } else if (Measure == 'H') {
+        for (x in 1:dim(ChExt)[1]) {
+          IDTOF[x,'EXT'] <-  max(ChExt[x,])
+          IDTOF[x,'PH.EXT'] <-  max(ChExt[x,])
+          IDTOF[x,'G'] <- max(Ch1[x,])
+          IDTOF[x,'Y'] <- max(Ch2[x,])
+          IDTOF[x,'R'] <- max(Ch3[x,])
+        }
+
+      }
+
+      Stages <- c('50-75','75-150','150-225','225-500','500-800')
+      for (x in 1:dim(IDTOF)[1]) {
+        if (as.numeric(IDTOF[x,'TOF']) < 50) {IDTOF[x,'Stage'] <- 'TooSmall'}
+
+        else if (as.numeric(IDTOF[x,'TOF']) >= 50 & as.numeric(IDTOF[x,'TOF']) < 75) {IDTOF[x,'Stage'] <- Stages[1]}
+        else if (as.numeric(IDTOF[x,'TOF']) >= 75 & as.numeric(IDTOF[x,'TOF']) < 150) {IDTOF[x,'Stage'] <- Stages[2]}
+        else if (as.numeric(IDTOF[x,'TOF']) >= 150 & as.numeric(IDTOF[x,'TOF']) < 225) {IDTOF[x,'Stage'] <- Stages[3]}
+        else if (as.numeric(IDTOF[x,'TOF']) >= 225 & as.numeric(IDTOF[x,'TOF']) < 500) {IDTOF[x,'Stage'] <- Stages[4]}
+        else if (as.numeric(IDTOF[x,'TOF']) >= 500 & as.numeric(IDTOF[x,'TOF']) <= 800) {IDTOF[x,'Stage'] <- Stages[5]}
+        else if (as.numeric(IDTOF[x,'TOF']) > 800) {IDTOF[x,'Stage'] <- 'TooBig'}
+      }
+      #Removing worms with amplitude of 35000 or higher
+      #Removing worms that are not in the size we care about
+      if (sum(as.numeric(IDTOF[,'TOF']) < Ranges[1]) == 0) {
+
+      } else {
+        IDTOF <- IDTOF[-which(IDTOF[,'Stage'] == 'TooSmall'),]
+
+      }
+
+      if (sum(as.numeric(IDTOF[,'TOF']) > Ranges[6]) == 0) {
+
+
+      } else { IDTOF <- IDTOF[-which(IDTOF[,'Stage'] == 'TooBig'),] }
+      IDTOF <- IDTOF[-which(IDTOF[,'PH.EXT'] > 35000),]
+      if (Classify == 'NA') {
+
+      } else {
+        WormIDs <- RunClassification(FileDirectories[x],ModelDirectory,35000,50,800,TypeOfData = TypeOfData)
+        BadWormIndex <- WormIDs[[2]]
+        #BadWormIndex <- unname(GoodIDs[1,BadWormIndex])
+        index <- which(IDTOF[,'ID'] %in% BadWormIndex)
+        Temp <- IDTOF[-index,]
+        IDTOF<- Temp
+      }
+      DataList[[z]] <- IDTOF
+    }
+   }  else {
+    stop('TypeOfData has the wrong input')
   }
+
 
 
   for (x in 1:length(DataList)) {
@@ -78,7 +200,7 @@ SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel) {
   }
   temp <- matrix(nrow=maxrow, ncol= length(DataList))
   temp <- as.data.frame(temp)
-  colnames(temp) <- Names
+
 
   if (FluorescenceChannel == 'G') {
     ChannelName <- 'Green'
@@ -87,10 +209,40 @@ SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel) {
   } else if ((FluorescenceChannel == 'Y')) {
     ChannelName <- 'Yellow'
   }
+  NewOrder <- rbind(1:length(DataList),1:length(DataList))
 
   for (x in 1:length(DataList)) {
+    NewOrder[2,x] <- median(DataList[[x]][,FluorescenceChannel])}
+
+  count <- 0
+  x <- 1
+  while (x <= length(DataList)) {
+    if (length(which(NewOrder[2,x] == sort(NewOrder[2,], decreasing = TRUE))) == 1) {
+      NewOrder[1,x] <- which(NewOrder[2,x] == sort(NewOrder[2,], decreasing = TRUE))
+     x <- x + 1
+    } else {
+      for (z in 1:length(which(NewOrder[2,x] == sort(NewOrder[2,], decreasing = TRUE)))) {
+        NewOrder[1,x + count] <- which(NewOrder[2,x] == sort(NewOrder[2,], decreasing = TRUE))[z]
+        count <- count + 1
+      }
+      x <- x + count
+      count <- 0
+
+    }
+  }
+
+  NewOrder2 <- 1:length(DataList)
+  for (x in 1:length(DataList)) {
+    NewOrder2[x] <- which(NewOrder[1,] == x)
+  }
+
+  colnames(temp) <- Names[NewOrder2]
+
+  for (x in NewOrder[1,]) {
     temp[1:dim(DataList[[x]])[1],Names[x]] <- DataList[[x]][1:dim(DataList[[x]])[1],FluorescenceChannel]
   }
+  Means <- NewOrder[2,NewOrder[1,]]
+
   output <- ggplot(data = melt(temp), aes(x=variable,y=value)) +
     geom_boxplot(aes(fill=variable)) +
     ggtitle(paste('Summary of The ',ChannelName, ' Channel', sep = '')) +
@@ -98,5 +250,16 @@ SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel) {
     ylab('Fluorescence (A.U)') +
     theme(plot.title = element_text(hjust = 0.5)) +
     guides(fill=guide_legend(title='Strains'))
-return(output)
+
+  if (Scale == 'Log10') {
+    output<-   output +  scale_y_continuous(trans='log10') + ylab('Log10(Fluorescence (A.U))')
+  } else if (Scale == 'Log2') {
+    output<-   output +  scale_y_continuous(trans='log2') + ylab('Log2(Fluorescence (A.U))')
+  } else if (Scale == 'Normal') {
+    output<-   output + ylab('Fluorescence (A.U)')
+  }
+
+
+  # stat_summary(geom = "errorbar", fun = mean,  linetype = "dashed",width = 1)
+  return(output)
 }
