@@ -9,7 +9,7 @@
 #'
 #' @return Returns a summary boxplot of the fluorescence.
 #' @export
-SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = 'NA',Measure = 'I',Scale = 'Normal',TypeOfData = 'Summary') {
+SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = 'NA',Measure = 'I',Scale = 'Normal',TypeOfData = 'Summary',MinMaxRange = c(50,800)) {
   if(missing(FileDirectories)){
     stop('Missing FileDirectories input')
   }  else if(typeof(FileDirectories) != 'character') {
@@ -162,14 +162,14 @@ SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = '
       }
       #Removing worms with amplitude of 35000 or higher
       #Removing worms that are not in the size we care about
-      if (sum(as.numeric(IDTOF[,'TOF']) < Ranges[1]) == 0) {
+      if (sum(as.numeric(IDTOF[,'TOF']) < MinMaxRange[1]) == 0) {
 
       } else {
         IDTOF <- IDTOF[-which(IDTOF[,'Stage'] == 'TooSmall'),]
 
       }
 
-      if (sum(as.numeric(IDTOF[,'TOF']) > Ranges[6]) == 0) {
+      if (sum(as.numeric(IDTOF[,'TOF']) > MinMaxRange[2]) == 0) {
 
 
       } else { IDTOF <- IDTOF[-which(IDTOF[,'Stage'] == 'TooBig'),] }
@@ -177,7 +177,7 @@ SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = '
       if (Classify == 'NA') {
 
       } else {
-        WormIDs <- RunClassification(FileDirectories[x],ModelDirectory,35000,50,800,TypeOfData = TypeOfData)
+        WormIDs <- RunClassification(FileDirectories[z],ModelDirectory,35000,50,800,TypeOfData = 'FullFile')
         BadWormIndex <- WormIDs[[2]]
         #BadWormIndex <- unname(GoodIDs[1,BadWormIndex])
         index <- which(IDTOF[,'ID'] %in% BadWormIndex)

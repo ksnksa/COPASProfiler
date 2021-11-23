@@ -11,7 +11,8 @@ SummaryPlots(
   Classify = "NA",
   Measure = "I",
   Scale = "Normal",
-  TypeOfData = "Summary"
+  TypeOfData = "Summary",
+  MinMaxRange = c(50, 800)
 )
 }
 \arguments{
