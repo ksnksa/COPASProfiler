@@ -12,7 +12,8 @@ SummaryPlots(
   Measure = "I",
   Scale = "Normal",
   TypeOfData = "Summary",
-  MinMaxRange = c(50, 800)
+  MinMaxRange = c(50, 800),
+  ModelDirectory = ""
 )
 }
 \arguments{
