@@ -9,7 +9,7 @@
 #'
 #' @return Returns a summary boxplot of the fluorescence.
 #' @export
-SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = 'NA',Measure = 'I',Scale = 'Normal',TypeOfData = 'Summary',MinMaxRange = c(50,800), ModelDirectory = '') {
+SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = 'NA',Measure = 'I',Scale = 'Normal',TypeOfData = 'Summary',MinMaxRange = c(50,800), ModelDirectory = '', Ranges = c(50,75,150,225,500,800)) {
   if(missing(FileDirectories)){
     stop('Missing FileDirectories input')
   }  else if(typeof(FileDirectories) != 'character') {
@@ -259,7 +259,118 @@ SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = '
     output<-   output + ylab('Fluorescence (A.U)')
   }
 
+  Plots <- list()
+
+  Stages <- paste(Ranges[1],Ranges[2],sep = '-')
+  for (m in 3:length(Ranges)) {
+    Stages <- c(Stages,paste(Ranges[m-1],Ranges[m],sep = '-'))
+  }
+  rowcounter <- c()
+  for (z in 1:length(DataList)) {
+    rowcounter[z] <-  dim(DataList[[z]])[1]
+
+  }
+  temp <- matrix(nrow=sum(rowcounter),ncol=9)
+  temp <- data.frame(temp)
+  colnames(temp) <- c('ID','TOF','EXT','G','Y','R','PH.EXT','Stage','Strain')
+  NewCount <- rowcounter[[1]]
+  for (z in 1:length(DataList)) {
+    if (z == 1) {
+
+      temp[1:NewCount,'Strain'] <- Names[z]
+      temp[1:NewCount,1:8] <- DataList[[z]]
+    } else {
+
+      temp[(NewCount + 1):(NewCount + rowcounter[[z]]),'Strain'] <- Names[z]
+      temp[(NewCount + 1):(NewCount + rowcounter[[z]]),1:8] <-DataList[[z]]
+      NewCount <- rowcounter[[z]] + NewCount
+    }
+
+  }
+  for (x in 1:length(Stages)) {
+    if (FluorescenceChannel == 'G') {
+      temp2 <- temp
+      temp2[,9] <- as.factor(temp2[,9])
+      temp2 <- temp2[which(temp2[,'Stage'] == Stages[x]),]
+      Plots[[x]] <- ggplot(temp2, aes(y = G, x = TOF)) +
+        geom_jitter(width=0.3,alpha=1,aes(color = Strain, text = temp2[,'ID'])) +
+        ggtitle(paste('Worms with TOF in the range of ',Stages[x], sep = '')) +
+        geom_smooth(method='lm', aes(color = Strain)) +
+        #geom_smooth(method = "nls", formula = y ~ a * x + b, se = F,
+
+        # method.args = list(start = list(a = 0.1, b = 0.1))) +
+        xlab('TOF') +
+        theme(plot.title = element_text(hjust = 0.5))
+      if (Scale == 'Log10') {
+        Plots[[x]]<- Plots[[x]] +  scale_y_continuous(trans='log10') + ylab('Log10(Fluorescence (A.U))')
+      } else if (Scale == 'Log2') {
+        Plots[[x]]<- Plots[[x]] +  scale_y_continuous(trans='log2') + ylab('Log2(Fluorescence (A.U))')
+      } else if (Scale == 'Normal') {
+        Plots[[x]]<-   Plots[[x]] + ylab('Fluorescence (A.U)')
+      }
+      # SummaryTable[x,1:6] <- summary(temp[,'G'])
+      # SummaryTable[x,7] <- length(temp[,'ID'])
+      Plots[[x]] <- ggplotly(Plots[[x]]  ,tooltip = 'all', dynamicTicks = TRUE)
+
+    }
+    if (FluorescenceChannel == 'Y') {
+      temp2 <- temp
+      temp2[,9] <- as.factor(temp2[,9])
+      temp2 <- temp2[which(temp2[,'Stage'] == Stages[x]),]
+      Plots[[x]] <- ggplot(temp2, aes(y = Y, x = TOF)) +
+        geom_jitter(width=0.3,alpha=1,aes(color = Strain, text = temp2[,'ID'])) +
+        ggtitle(paste('Worms with TOF in the range of ',Stages[x], sep = '')) +
+        geom_smooth(method='lm', aes(color = Strain)) +
+        #geom_smooth(method = "nls", formula = y ~ a * x + b, se = F,
+
+        # method.args = list(start = list(a = 0.1, b = 0.1))) +
+        xlab('TOF') +
+        theme(plot.title = element_text(hjust = 0.5))
+      if (Scale == 'Log10') {
+        Plots[[x]]<- Plots[[x]] +  scale_y_continuous(trans='log10') + ylab('Log10(Fluorescence (A.U))')
+      } else if (Scale == 'Log2') {
+        Plots[[x]]<- Plots[[x]] +  scale_y_continuous(trans='log2') + ylab('Log2(Fluorescence (A.U))')
+      } else if (Scale == 'Normal') {
+        Plots[[x]]<-   Plots[[x]] + ylab('Fluorescence (A.U)')
+      }
+      # SummaryTable[x,1:6] <- summary(temp[,'G'])
+      # SummaryTable[x,7] <- length(temp[,'ID'])
+      Plots[[x]] <- ggplotly(Plots[[x]]  ,tooltip = 'all', dynamicTicks = TRUE)
+
+    }
+    if (FluorescenceChannel == 'R') {
+      temp2 <- temp
+      temp2[,9] <- as.factor(temp2[,9])
+      temp2 <- temp2[which(temp2[,'Stage'] == Stages[x]),]
+      Plots[[x]] <- ggplot(temp2, aes(y = R, x = TOF)) +
+        geom_jitter(width=0.3,alpha=1,aes(color = Strain, text = temp2[,'ID'])) +
+        ggtitle(paste('Worms with TOF in the range of ',Stages[x], sep = '')) +
+        geom_smooth(method='lm', aes(color = Strain)) +
+        #geom_smooth(method = "nls", formula = y ~ a * x + b, se = F,
+
+        # method.args = list(start = list(a = 0.1, b = 0.1))) +
+        xlab('TOF') +
+        theme(plot.title = element_text(hjust = 0.5))
+      if (Scale == 'Log10') {
+        Plots[[x]]<- Plots[[x]] +  scale_y_continuous(trans='log10') + ylab('Log10(Fluorescence (A.U))')
+      } else if (Scale == 'Log2') {
+        Plots[[x]]<- Plots[[x]] +  scale_y_continuous(trans='log2') + ylab('Log2(Fluorescence (A.U))')
+      } else if (Scale == 'Normal') {
+        Plots[[x]]<-   Plots[[x]] + ylab('Fluorescence (A.U)')
+      }
+      # SummaryTable[x,1:6] <- summary(temp[,'G'])
+      # SummaryTable[x,7] <- length(temp[,'ID'])
+      Plots[[x]] <- ggplotly(Plots[[x]]  ,tooltip = 'all', dynamicTicks = TRUE)
+
+    }
+  }
+
+  Plots[[x+1]] <- output
+
+
+
+
 
   # stat_summary(geom = "errorbar", fun = mean,  linetype = "dashed",width = 1)
-  return(output)
+  return(Plots)
 }
