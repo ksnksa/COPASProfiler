@@ -15,7 +15,9 @@
 #'
 #' @return Returns a summary boxplot of the fluorescence.
 #' @export
-SummaryPlot <- function(FileDirectory, Name, FluorescenceChannel,Ranges = c(50,75,150,225,500,800),TypeOfData = 'Summary',Measure = 'I',Scale = 'Normal',WormIDs = 'NA') {
+SummaryPlot <- function(FileDirectory, Name, FluorescenceChannel,Ranges = c(50,75,150,225,500,800),
+                        TypeOfData = 'Summary',Measure = 'I',Scale = 'Normal',WormIDs = 'NA',
+                        FluoRange = 'NA', FluoThreshold = 'NA') {
   ### If statements to check its the correct file type and is not empty
   if(missing(FileDirectory)){
     stop('Missing FileDirectory input')
@@ -39,6 +41,9 @@ SummaryPlot <- function(FileDirectory, Name, FluorescenceChannel,Ranges = c(50,7
   if(!require("reshape2")){
     library("reshape2")
   }
+
+
+
   if (TypeOfData == 'Summary') {
     ChannelSummary <- read.delim(FileDirectory, header=TRUE)
     IDTOF <- matrix(nrow=which.max(ChannelSummary[,1]),ncol=8)
@@ -91,32 +96,135 @@ SummaryPlot <- function(FileDirectory, Name, FluorescenceChannel,Ranges = c(50,7
     for (x in 1:dim(ChExt)[1]) {
       IDTOF[x,'TOF'] <- which.min(ChExt[x,])
     }
-    if (Measure == 'I') {
-      for (x in 1:dim(ChExt)[1]) {
-        IDTOF[x,'EXT'] <- as.numeric(trapz(1:which.min(ChExt[x,]), ChExt[x,1:which.min(ChExt[x,])]))
-        IDTOF[x,'G'] <- as.numeric(trapz(1:which.min(Ch1[x,]), Ch1[x,1:which.min(Ch1[x,])]))
-        IDTOF[x,'Y'] <- as.numeric(trapz(1:which.min(Ch2[x,]), Ch2[x,1:which.min(Ch2[x,])]))
-        IDTOF[x,'R'] <- as.numeric(trapz(1:which.min(Ch3[x,]), Ch3[x,1:which.min(Ch3[x,])]))
-        IDTOF[x,'PH.EXT'] <-  max(ChExt[x,])
-         }
+    if (FluoRange[1] == 'NA') {
+      if (Measure == 'I') {
+        for (x in 1:dim(ChExt)[1]) {
+          IDTOF[x,'EXT'] <- as.numeric(trapz(1:which.min(ChExt[x,]), ChExt[x,1:which.min(ChExt[x,])]))
+          IDTOF[x,'G'] <- as.numeric(trapz(1:which.min(Ch1[x,]), Ch1[x,1:which.min(Ch1[x,])]))
+          IDTOF[x,'Y'] <- as.numeric(trapz(1:which.min(Ch2[x,]), Ch2[x,1:which.min(Ch2[x,])]))
+          IDTOF[x,'R'] <- as.numeric(trapz(1:which.min(Ch3[x,]), Ch3[x,1:which.min(Ch3[x,])]))
+          IDTOF[x,'PH.EXT'] <-  max(ChExt[x,])
+        }
 
 
-    } else if (Measure == 'W') {
-      stop('Measure type not currently supported')
-    } else if (Measure == 'H') {
-      for (x in 1:dim(ChExt)[1]) {
-        IDTOF[x,'EXT'] <-  max(ChExt[x,])
-        IDTOF[x,'PH.EXT'] <-  max(ChExt[x,])
-        IDTOF[x,'G'] <- max(Ch1[x,])
-        IDTOF[x,'Y'] <- max(Ch2[x,])
-        IDTOF[x,'R'] <- max(Ch3[x,])
+      }
+      else if (Measure == 'W') {
+        stop('Measure type not currently supported')
+      }
+      else if (Measure == 'H') {
+        for (x in 1:dim(ChExt)[1]) {
+          IDTOF[x,'EXT'] <-  max(ChExt[x,])
+          IDTOF[x,'PH.EXT'] <-  max(ChExt[x,])
+          IDTOF[x,'G'] <- max(Ch1[x,])
+          IDTOF[x,'Y'] <- max(Ch2[x,])
+          IDTOF[x,'R'] <- max(Ch3[x,])
+        }
+
+      }
+      else {
+        stop('Incorrect Measure input')
+      }
+    } else if (length(FluoRange) != 2) {
+      stop('Fluorescence Range input does not have two numeric ranges')
+
+
+        } else if (FluoRange[2] > 50) {
+      stop('Fluorescence Range second input is more than 50')
+
+          } else if (FluoRange[1] < 0) {
+      stop('Fluorescence Range first input is less than 0')
+
+            } else if (FluoRange[1] > FluoRange[2]) {
+      stop('Fluorescence Range first input is bigger than the second input range')
+
+              } else if (FluoRange[1] < FluoRange[2]) {
+      SecondaryFluRange <- c(FluoRange[1] + 50,FluoRange[2] +50)
+
+      if (Measure == 'I') {
+        for (x in 1:dim(ChExt)[1]) {
+          IDTOF[x,'EXT'] <- as.numeric(trapz(1:which.min(ChExt[x,]), ChExt[x,1:which.min(ChExt[x,])]))
+          MinandMax <- c(floor(which.min(ChExt[x,1:which.min(ChExt[x,])]) * FluoRange[1] /100),floor(which.min(ChExt[x,2:which.min(ChExt[x,])]) * FluoRange[2] /100))
+          MinandMax2 <- c(floor(which.min(ChExt[x,1:which.min(ChExt[x,])]) * SecondaryFluRange[1] /100),floor(which.min(ChExt[x,2:which.min(ChExt[x,])]) * SecondaryFluRange[2] /100))
+          # G
+          TempMaxG1 <- max(Ch1[x,MinandMax[1]:MinandMax[2]])
+          TempMaxG2 <- max(Ch1[x,MinandMax2[1]:MinandMax2[2]])
+          if (TempMaxG1 > TempMaxG2 | TempMaxG1 == TempMaxG2 ) {
+            IDTOF[x,'G'] <- as.numeric(trapz(MinandMax[1]:MinandMax[2], Ch1[x,MinandMax[1]:MinandMax[2]]))
+          } else if (TempMaxG1 < TempMaxG2) {
+            IDTOF[x,'G'] <- as.numeric(trapz(MinandMax2[1]:MinandMax2[2], Ch1[x,MinandMax2[1]:MinandMax2[2]]))
+          }
+          #Y
+         # MinandMax <- c(floor(which.min(Ch2[x,2:length(Ch2[x,])]) * FluoRange[1] /100),floor(which.min(Ch2[x,2:length(Ch2[x,])]) * FluoRange[2] /100))
+        #  MinandMax2 <- c(floor(which.min(Ch2[x,2:length(Ch2[x,])]) * SecondaryFluRange[1] /100),floor(which.min(Ch2[x,2:length(Ch2[x,])]) * SecondaryFluRange[2] /100))
+          TempMaxY1 <- max(Ch2[x,MinandMax[1]:MinandMax[2]])
+          TempMaxY2 <- max(Ch2[x,MinandMax2[1]:MinandMax2[2]])
+          if (TempMaxY1 > TempMaxY2 | TempMaxY1 == TempMaxY2 ) {
+            IDTOF[x,'Y'] <- as.numeric(trapz(MinandMax[1]:MinandMax[2], Ch2[x,MinandMax[1]:MinandMax[2]]))
+          } else if (TempMaxY1 < TempMaxY2) {
+            IDTOF[x,'Y'] <- as.numeric(trapz(MinandMax2[1]:MinandMax2[2], Ch2[x,MinandMax2[1]:MinandMax2[2]]))
+          }
+          #R
+         # MinandMax <- c(floor(which.min(Ch3[x,2:length(Ch3[x,])]) * FluoRange[1] /100),floor(which.min(Ch3[x,2:length(Ch3[x,])]) * FluoRange[2] /100))
+        #  MinandMax2 <- c(floor(which.min(Ch3[x,2:length(Ch3[x,])]) * SecondaryFluRange[1] /100),floor(which.min(Ch3[x,2:length(Ch3[x,])]) * SecondaryFluRange[2] /100))
+          TempMaxR1 <- max(Ch3[x,MinandMax[1]:MinandMax[2]])
+          TempMaxR2 <- max(Ch3[x,MinandMax2[1]:MinandMax2[2]])
+          if (TempMaxR1 > TempMaxR2 | TempMaxR1 == TempMaxR2 ) {
+            IDTOF[x,'R'] <- as.numeric(trapz(MinandMax[1]:MinandMax[2], Ch3[x,MinandMax[1]:MinandMax[2]]))
+          } else if (TempMaxR1 < TempMaxR2) {
+            IDTOF[x,'R'] <- as.numeric(trapz(MinandMax2[1]:MinandMax2[2], Ch3[x,MinandMax2[1]:MinandMax2[2]]))
+          }
+
+          #IDTOF[x,'Y'] <- as.numeric(trapz(1:which.min(Ch2[x,]), Ch2[x,1:which.min(Ch2[x,])]))
+          #IDTOF[x,'R'] <- as.numeric(trapz(1:which.min(Ch3[x,]), Ch3[x,1:which.min(Ch3[x,])]))
+          IDTOF[x,'PH.EXT'] <-  max(ChExt[x,])
+        }
+
+
+      } else if (Measure == 'W') {
+        stop('Measure type not currently supported')
+      } else if (Measure == 'H') {
+        for (x in 1:dim(ChExt)[1]) {
+          IDTOF[x,'EXT'] <-  max(ChExt[x,])
+          IDTOF[x,'PH.EXT'] <-  max(ChExt[x,])
+
+
+          MinandMax <- c(floor(which.min(ChExt[x,1:which.min(ChExt[x,])]) * FluoRange[1] /100),floor(which.min(ChExt[x,2:which.min(ChExt[x,])]) * FluoRange[2] /100))
+          MinandMax2 <- c(floor(which.min(ChExt[x,1:which.min(ChExt[x,])]) * SecondaryFluRange[1] /100),floor(which.min(ChExt[x,2:which.min(ChExt[x,])]) * SecondaryFluRange[2] /100))
+          # G
+          TempMaxG1 <- max(Ch1[x,MinandMax[1]:MinandMax[2]])
+          TempMaxG2 <- max(Ch1[x,MinandMax2[1]:MinandMax2[2]])
+          if (TempMaxG1 > TempMaxG2 | TempMaxG1 == TempMaxG2 ) {
+            IDTOF[x,'G'] <- TempMaxG1
+          } else if (TempMaxG1 < TempMaxG2) {
+            IDTOF[x,'G'] <- TempMaxG2
+          }
+          #Y
+          TempMaxY1 <- max(Ch2[x,MinandMax[1]:MinandMax[2]])
+          TempMaxY2 <- max(Ch2[x,MinandMax2[1]:MinandMax2[2]])
+          if (TempMaxY1 > TempMaxY2 | TempMaxY1 == TempMaxY2 ) {
+            IDTOF[x,'Y'] <- TempMaxY1
+          } else if (TempMaxY1 < TempMaxY2) {
+            IDTOF[x,'Y'] <- TempMaxY2
+          }
+          #R
+          TempMaxR1 <- max(Ch3[x,MinandMax[1]:MinandMax[2]])
+          TempMaxR2 <- max(Ch3[x,MinandMax2[1]:MinandMax2[2]])
+          if (TempMaxR1 > TempMaxR2 | TempMaxR1 == TempMaxR2 ) {
+            IDTOF[x,'R'] <- TempMaxR1
+          } else if (TempMaxR1 < TempMaxR2) {
+            IDTOF[x,'R'] <- TempMaxR2
+          }
+
+          #IDTOF[x,'G'] <- max(Ch1[x,])
+          #IDTOF[x,'Y'] <- max(Ch2[x,])
+          #IDTOF[x,'R'] <- max(Ch3[x,])
+        }
+
+      } else {
+        stop('Incorrect Measure input')
       }
 
-    } else {
-      stop('Incorrect Measure input')
-    }
-
-  }
+      } }
 
 
   Stages <- c(paste(Ranges[1],Ranges[2],sep = '-'),paste(Ranges[2],Ranges[3],sep = '-'),paste(Ranges[3],Ranges[4],sep = '-')
@@ -153,7 +261,13 @@ SummaryPlot <- function(FileDirectory, Name, FluorescenceChannel,Ranges = c(50,7
     IDTOF <- IDTOF[-which(IDTOF[,'Stage'] == 'TooSmall'),]
 
   }
+  if (FluoThreshold == 'NA') {
 
+  } else if (typeof(FluoThreshold) == 'double' & FluoThreshold > 0) {
+    IDTOF <- IDTOF[-which(IDTOF[,FluorescenceChannel] >= FluoThreshold),]
+  } else {
+    stop('FluoThreshold is not a number or is 0 or less')
+  }
   if (sum(as.numeric(IDTOF[,'TOF']) > Ranges[6]) == 0) {
 
 
@@ -180,6 +294,7 @@ SummaryPlot <- function(FileDirectory, Name, FluorescenceChannel,Ranges = c(50,7
   RowNames[length(Ranges)] <- 'All TOFs'
   rownames(SummaryTable) <- RowNames
   if (FluorescenceChannel == 'G') {
+
     TOFPlots <- ggplot(IDTOF, aes(Stage,G, label = TOF)) +
       #geom_jitter(width=0.3,alpha=0.2) +
       #geom_point(aes(text = IDTOF[,'ID']),alpha = 0) +
@@ -195,7 +310,7 @@ SummaryPlot <- function(FileDirectory, Name, FluorescenceChannel,Ranges = c(50,7
       TOFPlots <-  TOFPlots + ylab('Fluorescence (A.U)')
     }
 
-    TOFPlots <- ggplotly(TOFPlots, tooltip='text', dynamicTicks = TRUE)
+    TOFPlots <- ggplotly(TOFPlots, tooltip='all', dynamicTicks = TRUE)
     hoverinfo <- with(IDTOF, paste0('ID: ',IDTOF[,'ID'],sep=''))
 
     TOFPlots$x$data[[1]]$text <- hoverinfo
@@ -203,6 +318,7 @@ SummaryPlot <- function(FileDirectory, Name, FluorescenceChannel,Ranges = c(50,7
     SummaryTable[6,1:6] <- summary(IDTOF[,'G'])
     SummaryTable[6,7] <- length(IDTOF[,'ID'])
   } else if (FluorescenceChannel == 'Y') {
+
     TOFPlots <- ggplot(IDTOF, aes(Stage,Y, label = TOF)) +
       #geom_jitter(width=0.3,alpha=1) +
       geom_boxplot(color='yellow',alpha=1) +
@@ -220,7 +336,7 @@ SummaryPlot <- function(FileDirectory, Name, FluorescenceChannel,Ranges = c(50,7
     hoverinfo <- with(IDTOF, paste0('ID: ',IDTOF[,'ID'],sep=''))
 
     TOFPlots$x$data[[1]]$text <- hoverinfo
-    TOFPlots$x$data[[1]]$hoverinfo <- c('text','boxes')
+   TOFPlots$x$data[[1]]$hoverinfo <- c('text','boxes')
     SummaryTable[6,1:6] <- summary(IDTOF[,'Y'])
     SummaryTable[6,7] <- length(IDTOF[,'ID'])
   } else if (FluorescenceChannel == 'R') {

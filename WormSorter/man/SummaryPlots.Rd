@@ -14,7 +14,8 @@ SummaryPlots(
   TypeOfData = "Summary",
   MinMaxRange = c(50, 800),
   ModelDirectory = "",
-  Ranges = c(50, 75, 150, 225, 500, 800)
+  Ranges = c(50, 75, 150, 225, 500, 800),
+  FluoThreshold = "NA"
 )
 }
 \arguments{

@@ -9,7 +9,9 @@
 #'
 #' @return Returns a summary boxplot of the fluorescence.
 #' @export
-SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = 'NA',Measure = 'I',Scale = 'Normal',TypeOfData = 'Summary',MinMaxRange = c(50,800), ModelDirectory = '', Ranges = c(50,75,150,225,500,800)) {
+SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = 'NA',Measure = 'I',Scale = 'Normal',
+                          TypeOfData = 'Summary',MinMaxRange = c(50,800), ModelDirectory = '', Ranges = c(50,75,150,225,500,800)
+                    , FluoThreshold = 'NA') {
   if(missing(FileDirectories)){
     stop('Missing FileDirectories input')
   }  else if(typeof(FileDirectories) != 'character') {
@@ -69,14 +71,14 @@ SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = '
 
       Stages <- c('50-75','75-150','150-225','225-500','500-800')
       for (x in 1:dim(IDTOF)[1]) {
-        if (as.numeric(IDTOF[x,'TOF']) < 50) {IDTOF[x,'Stage'] <- 'TooSmall'}
+        if (as.numeric(IDTOF[x,'TOF']) < MinMaxRange[1]) {IDTOF[x,'Stage'] <- 'TooSmall'}
 
-        else if (as.numeric(IDTOF[x,'TOF']) >= 50 & as.numeric(IDTOF[x,'TOF']) < 75) {IDTOF[x,'Stage'] <- Stages[1]}
+        else if (as.numeric(IDTOF[x,'TOF']) >= MinMaxRange[1] & as.numeric(IDTOF[x,'TOF']) < 75) {IDTOF[x,'Stage'] <- Stages[1]}
         else if (as.numeric(IDTOF[x,'TOF']) >= 75 & as.numeric(IDTOF[x,'TOF']) < 150) {IDTOF[x,'Stage'] <- Stages[2]}
         else if (as.numeric(IDTOF[x,'TOF']) >= 150 & as.numeric(IDTOF[x,'TOF']) < 225) {IDTOF[x,'Stage'] <- Stages[3]}
         else if (as.numeric(IDTOF[x,'TOF']) >= 225 & as.numeric(IDTOF[x,'TOF']) < 500) {IDTOF[x,'Stage'] <- Stages[4]}
-        else if (as.numeric(IDTOF[x,'TOF']) >= 500 & as.numeric(IDTOF[x,'TOF']) <= 800) {IDTOF[x,'Stage'] <- Stages[5]}
-        else if (as.numeric(IDTOF[x,'TOF']) > 800) {IDTOF[x,'Stage'] <- 'TooBig'}
+        else if (as.numeric(IDTOF[x,'TOF']) >= 500 & as.numeric(IDTOF[x,'TOF']) <= MinMaxRange[2]) {IDTOF[x,'Stage'] <- Stages[5]}
+        else if (as.numeric(IDTOF[x,'TOF']) > MinMaxRange[2]) {IDTOF[x,'Stage'] <- 'TooBig'}
       }
       for (x in 1:dim(IDTOF)[1]) {
         IDTOF[x,'ID'] <- paste('X',IDTOF[x,'ID'],sep='')
@@ -151,14 +153,14 @@ SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = '
 
       Stages <- c('50-75','75-150','150-225','225-500','500-800')
       for (x in 1:dim(IDTOF)[1]) {
-        if (as.numeric(IDTOF[x,'TOF']) < 50) {IDTOF[x,'Stage'] <- 'TooSmall'}
+        if (as.numeric(IDTOF[x,'TOF']) < MinMaxRange[1]) {IDTOF[x,'Stage'] <- 'TooSmall'}
 
-        else if (as.numeric(IDTOF[x,'TOF']) >= 50 & as.numeric(IDTOF[x,'TOF']) < 75) {IDTOF[x,'Stage'] <- Stages[1]}
+        else if (as.numeric(IDTOF[x,'TOF']) >= MinMaxRange[1] & as.numeric(IDTOF[x,'TOF']) < 75) {IDTOF[x,'Stage'] <- Stages[1]}
         else if (as.numeric(IDTOF[x,'TOF']) >= 75 & as.numeric(IDTOF[x,'TOF']) < 150) {IDTOF[x,'Stage'] <- Stages[2]}
         else if (as.numeric(IDTOF[x,'TOF']) >= 150 & as.numeric(IDTOF[x,'TOF']) < 225) {IDTOF[x,'Stage'] <- Stages[3]}
         else if (as.numeric(IDTOF[x,'TOF']) >= 225 & as.numeric(IDTOF[x,'TOF']) < 500) {IDTOF[x,'Stage'] <- Stages[4]}
-        else if (as.numeric(IDTOF[x,'TOF']) >= 500 & as.numeric(IDTOF[x,'TOF']) <= 800) {IDTOF[x,'Stage'] <- Stages[5]}
-        else if (as.numeric(IDTOF[x,'TOF']) > 800) {IDTOF[x,'Stage'] <- 'TooBig'}
+        else if (as.numeric(IDTOF[x,'TOF']) >= 500 & as.numeric(IDTOF[x,'TOF']) <= MinMaxRange[2]) {IDTOF[x,'Stage'] <- Stages[5]}
+        else if (as.numeric(IDTOF[x,'TOF']) > MinMaxRange[2]) {IDTOF[x,'Stage'] <- 'TooBig'}
       }
       #Removing worms with amplitude of 35000 or higher
       #Removing worms that are not in the size we care about
@@ -237,6 +239,17 @@ SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = '
   }
 
   colnames(temp) <- Names[NewOrder2]
+
+
+  if (FluoThreshold == 'NA') {
+
+  } else if (typeof(FluoThreshold) == 'double' & FluoThreshold > 0) {
+    for (x in 1:length(DataList)) {
+      DataList[[x]] <- DataList[[x]][-which(DataList[[x]][,FluorescenceChannel] >= FluoThreshold),]
+    }
+  } else {
+    stop('FluoThreshold is not a number or is 0 or less')
+  }
 
   for (x in NewOrder[1,]) {
     temp[1:dim(DataList[[x]])[1],Names[x]] <- DataList[[x]][1:dim(DataList[[x]])[1],FluorescenceChannel]

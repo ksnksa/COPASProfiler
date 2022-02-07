@@ -12,7 +12,9 @@ SummaryPlot(
   TypeOfData = "Summary",
   Measure = "I",
   Scale = "Normal",
-  WormIDs = "NA"
+  WormIDs = "NA",
+  FluoRange = "NA",
+  FluoThreshold = "NA"
 )
 }
 \arguments{

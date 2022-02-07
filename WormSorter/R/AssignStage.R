@@ -16,7 +16,7 @@ AssignStage <- function(Channel) {
   for (x in 1:length(Channel[,1])) {
     TOF[x,1] <- which.min(Channel[x,])
     if (as.numeric(TOF[x,1]) < 50 ) {TOF[x,2] <- "NA"} # I wasn't sure what to call things less than L1
-    else if (as.numeric(TOF[x,1]) >= 60 & as.numeric(TOF[x,1]) < 100 ) {TOF[x,2] <- "L1"}
+    else if (as.numeric(TOF[x,1]) >= 50 & as.numeric(TOF[x,1]) < 100 ) {TOF[x,2] <- "L1"}
     else if (as.numeric(TOF[x,1]) >= 100 & as.numeric(TOF[x,1]) < 200 ) {TOF[x,2] <- "L2"}
     else if (as.numeric(TOF[x,1]) >= 200 & as.numeric(TOF[x,1]) < 300 ) {TOF[x,2] <- "L2/L3"}
     else if (as.numeric(TOF[x,1]) >= 300 & as.numeric(TOF[x,1]) < 600 ) {TOF[x,2] <- "L4"}
