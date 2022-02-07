@@ -245,7 +245,12 @@ SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = '
 
   } else if (typeof(FluoThreshold) == 'double' & FluoThreshold > 0) {
     for (x in 1:length(DataList)) {
-      DataList[[x]] <- DataList[[x]][-which(DataList[[x]][,FluorescenceChannel] >= FluoThreshold),]
+      if (sum(which(DataList[[x]][,FluorescenceChannel] >= FluoThreshold)) == 0) {
+
+      } else {
+        DataList[[x]] <- DataList[[x]][-which(DataList[[x]][,FluorescenceChannel] >= FluoThreshold),]
+
+      }
     }
   } else {
     stop('FluoThreshold is not a number or is 0 or less')

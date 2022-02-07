@@ -264,7 +264,12 @@ SummaryPlot <- function(FileDirectory, Name, FluorescenceChannel,Ranges = c(50,7
   if (FluoThreshold == 'NA') {
 
   } else if (typeof(FluoThreshold) == 'double' & FluoThreshold > 0) {
-    IDTOF <- IDTOF[-which(IDTOF[,FluorescenceChannel] >= FluoThreshold),]
+    if (sum(which(IDTOF[,FluorescenceChannel] >= FluoThreshold)) == 0) {
+
+    } else {
+      IDTOF <- IDTOF[-which(IDTOF[,FluorescenceChannel] >= FluoThreshold),]
+
+    }
   } else {
     stop('FluoThreshold is not a number or is 0 or less')
   }
