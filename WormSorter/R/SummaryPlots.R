@@ -175,7 +175,12 @@ SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = '
 
 
       } else { IDTOF <- IDTOF[-which(IDTOF[,'Stage'] == 'TooBig'),] }
-      IDTOF <- IDTOF[-which(IDTOF[,'PH.EXT'] > 35000),]
+      if (sum(as.numeric(which(IDTOF[,'PH.EXT'] > 35000))) == 0) {
+
+      } else {
+        IDTOF <- IDTOF[-which(IDTOF[,'PH.EXT'] > 35000),]
+
+      }
       if (Classify == 'NA') {
 
       } else {

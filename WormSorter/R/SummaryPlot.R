@@ -277,7 +277,14 @@ SummaryPlot <- function(FileDirectory, Name, FluorescenceChannel,Ranges = c(50,7
 
 
   } else { IDTOF <- IDTOF[-which(IDTOF[,'Stage'] == 'TooBig'),] }
-  IDTOF <- IDTOF[-which(IDTOF[,'PH.EXT'] > 35000),]
+
+  if (sum(as.numeric(which(IDTOF[,'PH.EXT'] > 35000))) == 0) {
+
+  } else {
+    IDTOF <- IDTOF[-which(IDTOF[,'PH.EXT'] > 35000),]
+
+  }
+
   if (WormIDs[[1]][1] == 'NA') {
 
   } else {
