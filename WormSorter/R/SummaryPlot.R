@@ -266,6 +266,8 @@ SummaryPlot <- function(FileDirectory, Name, FluorescenceChannel,Ranges = c(50,7
   } else if (typeof(FluoThreshold) == 'double' & FluoThreshold > 0) {
     if (sum(which(IDTOF[,FluorescenceChannel] >= FluoThreshold)) == 0) {
 
+    } else if (sum(which(IDTOF[,FluorescenceChannel] < FluoThreshold)) <= 1){
+      stop('No worms left in data set. Change max fluorescence parameter.')
     } else {
       IDTOF <- IDTOF[-which(IDTOF[,FluorescenceChannel] >= FluoThreshold),]
 

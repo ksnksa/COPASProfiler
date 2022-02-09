@@ -252,7 +252,11 @@ SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = '
     for (x in 1:length(DataList)) {
       if (sum(which(DataList[[x]][,FluorescenceChannel] >= FluoThreshold)) == 0) {
 
-      } else {
+      } else if (sum(which(DataList[[x]][,FluorescenceChannel] < FluoThreshold)) <= 1) {
+        stop('One or more datasets have no objects left. Increase the max fluorescence parameter.') }
+        else {
+
+
         DataList[[x]] <- DataList[[x]][-which(DataList[[x]][,FluorescenceChannel] >= FluoThreshold),]
 
       }
