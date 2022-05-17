@@ -16,7 +16,7 @@
 #' @return Returns a summary boxplot of the fluorescence.
 #' @export
 SummaryPlot <- function(FileDirectory, Name, FluorescenceChannel,Ranges = c(50,75,150,225,500,800),
-                        TypeOfData = 'Summary',Measure = 'I',Scale = 'Normal',WormIDs = 'NA',
+                        TypeOfData = 'Summary',Measure = 'H',Scale = 'Normal',WormIDs = 'NA',
                         FluoRange = 'NA', FluoThreshold = 'NA') {
   ### If statements to check its the correct file type and is not empty
   if(missing(FileDirectory)){
@@ -290,10 +290,10 @@ SummaryPlot <- function(FileDirectory, Name, FluorescenceChannel,Ranges = c(50,7
   if (WormIDs[[1]][1] == 'NA') {
 
   } else {
-    BadWormIndex <- WormIDs[[2]]
+    GoodWormIndex <- WormIDs[[1]]
     #BadWormIndex <- unname(GoodIDs[1,BadWormIndex])
-    index <- which(IDTOF[,'ID'] %in% BadWormIndex)
-    Temp <- IDTOF[-index,]
+    index <- which(IDTOF[,'ID'] %in% GoodWormIndex)
+    Temp <- IDTOF[index,]
     IDTOF<- Temp
   }
 
@@ -432,7 +432,7 @@ SummaryPlot <- function(FileDirectory, Name, FluorescenceChannel,Ranges = c(50,7
     }
     Plots[[x]] <- ggplotly(Plots[[x]],tooltip = 'all', dynamicTicks = TRUE)
     SummaryTable[x,1:6] <- summary(temp[,'R'])
-    SummaryTable[x,7] <- length(temp[,'ID'])
+              SummaryTable[x,7] <- length(temp[,'ID'])
   }}
   Plots[[6]] <- TOFPlots
   Plots[[7]] <- SummaryTable

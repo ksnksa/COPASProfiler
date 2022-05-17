@@ -9,8 +9,8 @@
 #'
 #' @return Returns a summary boxplot of the fluorescence.
 #' @export
-SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = 'NA',Measure = 'I',Scale = 'Normal',
-                          TypeOfData = 'Summary',MinMaxRange = c(50,800), ModelDirectory = '', Ranges = c(50,75,150,225,500,800)
+SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = 'NA',Measure = 'H',Scale = 'Normal',
+                          TypeOfData = 'Summary', ModelDirectory = '', Ranges = c(51,75,150,225,500,800)
                     , FluoThreshold = 'NA') {
   if(missing(FileDirectories)){
     stop('Missing FileDirectories input')
@@ -33,6 +33,21 @@ SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = '
   if(!require("reshape2")){
     library("reshape2")
   }
+  if (Classify == 'NA') {
+
+  } else {
+    if (ModelDirectory == '') {
+      stop('User provided no model directory to classify with.')
+    } else {
+      ModelName <- load(ModelDirectory)
+      Model <- get(ModelName)
+      ModelVectorLength <- dim(Model@xmatrix[[1]])[2]
+      if (ModelVectorLength >= Ranges[1]) {
+        stop(paste('Model vector length is:',ModelVectorLength,' Minimum range input must be at least one more than Model vector length'))
+      }
+    }
+  }
+  MinMaxRange <- c(Ranges[1],Ranges[6])
   ChannelSummary <- list()
   DataList <- list()
   if (TypeOfData == 'Summary') {
@@ -68,26 +83,53 @@ SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = '
       IDTOF[,7] <- ChannelSummary[[z]][1:dim(IDTOF)[1],15]
 
 
+      Stages <- c(paste(Ranges[1],Ranges[2],sep = '-'),paste(Ranges[2],Ranges[3],sep = '-'),paste(Ranges[3],Ranges[4],sep = '-')
+                  ,paste(Ranges[4],Ranges[5],sep = '-'),paste(Ranges[5],Ranges[6],sep = '-'))
 
-      Stages <- c('50-75','75-150','150-225','225-500','500-800')
       for (x in 1:dim(IDTOF)[1]) {
-        if (as.numeric(IDTOF[x,'TOF']) < MinMaxRange[1]) {IDTOF[x,'Stage'] <- 'TooSmall'}
+        if ((sum(as.numeric(IDTOF[,'TOF']) < Ranges[1]) == 0)) {
+        } else {
+          if (as.numeric(IDTOF[x,'TOF']) < Ranges[1]) {IDTOF[x,'Stage'] <- 'TooSmall'}
+        }
+        if (as.numeric(IDTOF[x,'TOF']) >= Ranges[1] & as.numeric(IDTOF[x,'TOF']) < Ranges[2]) {IDTOF[x,'Stage'] <- Stages[1]
+        } else if (as.numeric(IDTOF[x,'TOF']) >= Ranges[2] & as.numeric(IDTOF[x,'TOF']) < Ranges[3]) {IDTOF[x,'Stage'] <- Stages[2]
+        } else if (as.numeric(IDTOF[x,'TOF']) >= Ranges[3] & as.numeric(IDTOF[x,'TOF']) < Ranges[4]) {IDTOF[x,'Stage'] <- Stages[3]
+        } else if (as.numeric(IDTOF[x,'TOF']) >= Ranges[4] & as.numeric(IDTOF[x,'TOF']) < Ranges[5]) {IDTOF[x,'Stage'] <- Stages[4]
+        } else if (as.numeric(IDTOF[x,'TOF']) >= Ranges[5] & as.numeric(IDTOF[x,'TOF']) <= Ranges[6]) {IDTOF[x,'Stage'] <- Stages[5]
+        }
+        if(((sum(as.numeric(IDTOF[x,'TOF']) > Ranges[6]) == 0))) {
 
-        else if (as.numeric(IDTOF[x,'TOF']) >= MinMaxRange[1] & as.numeric(IDTOF[x,'TOF']) < 75) {IDTOF[x,'Stage'] <- Stages[1]}
-        else if (as.numeric(IDTOF[x,'TOF']) >= 75 & as.numeric(IDTOF[x,'TOF']) < 150) {IDTOF[x,'Stage'] <- Stages[2]}
-        else if (as.numeric(IDTOF[x,'TOF']) >= 150 & as.numeric(IDTOF[x,'TOF']) < 225) {IDTOF[x,'Stage'] <- Stages[3]}
-        else if (as.numeric(IDTOF[x,'TOF']) >= 225 & as.numeric(IDTOF[x,'TOF']) < 500) {IDTOF[x,'Stage'] <- Stages[4]}
-        else if (as.numeric(IDTOF[x,'TOF']) >= 500 & as.numeric(IDTOF[x,'TOF']) <= MinMaxRange[2]) {IDTOF[x,'Stage'] <- Stages[5]}
-        else if (as.numeric(IDTOF[x,'TOF']) > MinMaxRange[2]) {IDTOF[x,'Stage'] <- 'TooBig'}
+        } else {
+          if (as.numeric(IDTOF[x,'TOF']) > Ranges[6]) {IDTOF[x,'Stage'] <- 'TooBig'}
+        }
       }
       for (x in 1:dim(IDTOF)[1]) {
         IDTOF[x,'ID'] <- paste('X',IDTOF[x,'ID'],sep='')
       }
       #Removing worms with amplitude of 35000 or higher
       #Removing worms that are not in the size we care about
-      IDTOF <- IDTOF[-which(IDTOF[,'Stage'] == 'TooSmall'),]
-      IDTOF <- IDTOF[-which(IDTOF[,'Stage'] == 'TooBig'),]
-      IDTOF <- IDTOF[-which(IDTOF[,'PH.EXT'] > 35000),]
+      if (sum(as.numeric(IDTOF[,'TOF']) > Ranges[6]) == 0) {
+
+
+      } else { IDTOF <- IDTOF[-which(IDTOF[,'Stage'] == 'TooBig'),] }
+
+
+      #Removing worms with amplitude of 35000 or higher
+      #Removing worms that are not in the size we care about
+      if (sum(as.numeric(IDTOF[,'TOF']) < Ranges[1]) == 0) {
+
+      } else {
+        IDTOF <- IDTOF[-which(IDTOF[,'Stage'] == 'TooSmall'),]
+
+      }
+
+      if (sum(as.numeric(which(IDTOF[,'PH.EXT'] > 35000))) == 0) {
+
+      } else {
+        IDTOF <- IDTOF[-which(IDTOF[,'PH.EXT'] > 35000),]
+
+      }
+
       DataList[[z]] <- IDTOF
     }
 
@@ -151,16 +193,24 @@ SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = '
 
       }
 
-      Stages <- c('50-75','75-150','150-225','225-500','500-800')
+      Stages <- c(paste(Ranges[1],Ranges[2],sep = '-'),paste(Ranges[2],Ranges[3],sep = '-'),paste(Ranges[3],Ranges[4],sep = '-')
+                  ,paste(Ranges[4],Ranges[5],sep = '-'),paste(Ranges[5],Ranges[6],sep = '-'))
       for (x in 1:dim(IDTOF)[1]) {
-        if (as.numeric(IDTOF[x,'TOF']) < MinMaxRange[1]) {IDTOF[x,'Stage'] <- 'TooSmall'}
+        if ((sum(as.numeric(IDTOF[,'TOF']) < Ranges[1]) == 0)) {
+        } else {
+          if (as.numeric(IDTOF[x,'TOF']) < Ranges[1]) {IDTOF[x,'Stage'] <- 'TooSmall'}
+        }
+        if (as.numeric(IDTOF[x,'TOF']) >= Ranges[1] & as.numeric(IDTOF[x,'TOF']) < Ranges[2]) {IDTOF[x,'Stage'] <- Stages[1]
+        } else if (as.numeric(IDTOF[x,'TOF']) >= Ranges[2] & as.numeric(IDTOF[x,'TOF']) < Ranges[3]) {IDTOF[x,'Stage'] <- Stages[2]
+        } else if (as.numeric(IDTOF[x,'TOF']) >= Ranges[3] & as.numeric(IDTOF[x,'TOF']) < Ranges[4]) {IDTOF[x,'Stage'] <- Stages[3]
+        } else if (as.numeric(IDTOF[x,'TOF']) >= Ranges[4] & as.numeric(IDTOF[x,'TOF']) < Ranges[5]) {IDTOF[x,'Stage'] <- Stages[4]
+        } else if (as.numeric(IDTOF[x,'TOF']) >= Ranges[5] & as.numeric(IDTOF[x,'TOF']) <= Ranges[6]) {IDTOF[x,'Stage'] <- Stages[5]
+        }
+        if(((sum(as.numeric(IDTOF[x,'TOF']) > Ranges[6]) == 0))) {
 
-        else if (as.numeric(IDTOF[x,'TOF']) >= MinMaxRange[1] & as.numeric(IDTOF[x,'TOF']) < 75) {IDTOF[x,'Stage'] <- Stages[1]}
-        else if (as.numeric(IDTOF[x,'TOF']) >= 75 & as.numeric(IDTOF[x,'TOF']) < 150) {IDTOF[x,'Stage'] <- Stages[2]}
-        else if (as.numeric(IDTOF[x,'TOF']) >= 150 & as.numeric(IDTOF[x,'TOF']) < 225) {IDTOF[x,'Stage'] <- Stages[3]}
-        else if (as.numeric(IDTOF[x,'TOF']) >= 225 & as.numeric(IDTOF[x,'TOF']) < 500) {IDTOF[x,'Stage'] <- Stages[4]}
-        else if (as.numeric(IDTOF[x,'TOF']) >= 500 & as.numeric(IDTOF[x,'TOF']) <= MinMaxRange[2]) {IDTOF[x,'Stage'] <- Stages[5]}
-        else if (as.numeric(IDTOF[x,'TOF']) > MinMaxRange[2]) {IDTOF[x,'Stage'] <- 'TooBig'}
+        } else {
+          if (as.numeric(IDTOF[x,'TOF']) > Ranges[6]) {IDTOF[x,'Stage'] <- 'TooBig'}
+        }
       }
       #Removing worms with amplitude of 35000 or higher
       #Removing worms that are not in the size we care about
@@ -184,11 +234,11 @@ SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = '
       if (Classify == 'NA') {
 
       } else {
-        WormIDs <- RunClassification(FileDirectories[z],ModelDirectory,35000,50,800,TypeOfData = 'FullFile')
-        BadWormIndex <- WormIDs[[2]]
+        WormIDs <- RunClassification(FileDirectories[z],ModelDirectory,35000,MinMaxRange[1],MinMaxRange[2],TypeOfData = 'FullFile')
+        GoodWormIndex <- WormIDs[[1]]
         #BadWormIndex <- unname(GoodIDs[1,BadWormIndex])
-        index <- which(IDTOF[,'ID'] %in% BadWormIndex)
-        Temp <- IDTOF[-index,]
+        index <- which(IDTOF[,'ID'] %in% GoodWormIndex)
+        Temp <- IDTOF[index,]
         IDTOF<- Temp
       }
       DataList[[z]] <- IDTOF
@@ -314,6 +364,10 @@ SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = '
     }
 
   }
+  SummaryTable <- matrix(nrow=length(FileDirectories) , ncol = 7)
+  SummaryTable <- as.data.frame(SummaryTable)
+  colnames(SummaryTable) <- c('Min','1st Qu','Median','Mean','3rd Qu','Max','Count')
+  rownames(SummaryTable) <- Names
   for (x in 1:length(Stages)) {
     if (FluorescenceChannel == 'G') {
       temp2 <- temp
@@ -393,9 +447,19 @@ SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = '
   }
 
   Plots[[x+1]] <- output
+ #CREATE THE SUMMARY TABLE THINGY!!!!!
 
-
-
+  for (z in 1:length(DataList)) {
+    if (FluorescenceChannel == 'G') {
+      SummaryTable[z,1:6] <- summary(DataList[[z]][,'G'])
+    } else if (FluorescenceChannel == 'R'){
+      SummaryTable[z,1:6] <- summary(DataList[[z]][,'R'])
+    } else if (FluorescenceChannel == 'Y'){
+      SummaryTable[z,1:6] <- summary(DataList[[z]][,'Y'])
+    }
+    SummaryTable[z,7] <- dim(DataList[[z]])[1]
+ }
+ Plots[[length(Plots) +1]] <- SummaryTable
 
 
   # stat_summary(geom = "errorbar", fun = mean,  linetype = "dashed",width = 1)

@@ -11,7 +11,7 @@
 #' @return Returns the index number of the filtered objects
 #' @export
 FilterChannel <- function(ch,MaxAmp, MinLength,MaxLength) {
-  #Filters the inputted channel by Max TOF or/and by min length and max length
+  #Filters the channel by Max TOF or/and by min length and max length
   if(missing(MaxAmp) & missing(MinLength) & missing(MaxLength)){
     stop('Please input the MaxAmp or/and the Minimum and Maximum Worm Length ')
   } else if(!missing(MinLength) & missing(MaxLength)) {

@@ -10,7 +10,7 @@ SummaryPlot(
   FluorescenceChannel,
   Ranges = c(50, 75, 150, 225, 500, 800),
   TypeOfData = "Summary",
-  Measure = "I",
+  Measure = "H",
   Scale = "Normal",
   WormIDs = "NA",
   FluoRange = "NA",

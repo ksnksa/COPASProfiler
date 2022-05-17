@@ -9,12 +9,11 @@ SummaryPlots(
   Names,
   FluorescenceChannel,
   Classify = "NA",
-  Measure = "I",
+  Measure = "H",
   Scale = "Normal",
   TypeOfData = "Summary",
-  MinMaxRange = c(50, 800),
   ModelDirectory = "",
-  Ranges = c(50, 75, 150, 225, 500, 800),
+  Ranges = c(51, 75, 150, 225, 500, 800),
   FluoThreshold = "NA"
 )
 }

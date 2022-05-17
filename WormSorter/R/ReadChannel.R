@@ -54,6 +54,9 @@ ReadChannel <- function(Ch0Directory,Ch1Directory,Ch2Directory,Ch3Directory) {
   Ch1 = t(Ch1)
   Ch2 = t(Ch2)
   Ch3 = t(Ch3)
-
+  Ch0 <- Ch0[1:(dim(Ch0)[1]-1),]
+  Ch1 <- Ch1[1:(dim(Ch1)[1]-1),]
+  Ch2 <- Ch2[1:(dim(Ch2)[1]-1),]
+  Ch3 <- Ch3[1:(dim(Ch3)[1]-1),]
   return(list(Ch0,Ch1,Ch2,Ch3))
 }

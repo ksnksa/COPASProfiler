@@ -10,7 +10,8 @@ RunClassification(
   MaxAmp,
   MinLength,
   MaxLength,
-  TypeOfData = "FirstChannel"
+  TypeOfData = "FirstChannel",
+  ChannelToCluster = "1"
 )
 }
 \arguments{

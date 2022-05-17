@@ -11,8 +11,14 @@
 #'
 #' @return Returns annotated IDs after classification
 #' @export
-RunClassification <- function(DataDirectory,ModelDirectory,MaxAmp,MinLength,MaxLength,TypeOfData = 'FirstChannel') {
+RunClassification <- function(DataDirectory,ModelDirectory,MaxAmp,MinLength,MaxLength,TypeOfData = 'FirstChannel',ChannelToCluster='1') {
 
+  ModelName <- load(ModelDirectory)
+  Model <- get(ModelName)
+  ModelVectorLength <- dim(Model@xmatrix[[1]])[2]
+  if (ModelVectorLength >= MinLength) {
+    stop(paste('Model vector length is:',ModelVectorLength,' Minimum Length input must be at least one more than Model vector length'))
+  }
   if (TypeOfData == 'FirstChannel') {
     Ch0 <- read.delim(DataDirectory, header=TRUE)
     Ch0 = t(Ch0[,-c(which(is.na(Ch0[1,])))])
@@ -32,20 +38,16 @@ RunClassification <- function(DataDirectory,ModelDirectory,MaxAmp,MinLength,MaxL
   ChannelToCluster <- 1
   channellist[[ChannelToCluster]] <- Ch0
   channellist[[ChannelToCluster]] <- as.data.frame(channellist[[ChannelToCluster]][-c(Index),])
-  ModifiedData <- matrix(nrow= dim(channellist[[ChannelToCluster]])[1], ncol =100)
-  for (z in 1:dim(channellist[[ChannelToCluster]])[1]) {
-    if (max(which(channellist[[ChannelToCluster]][z,]!=0)) < 100 ) {
-      ModifiedData[z,] <- as.numeric(binning(channellist[[ChannelToCluster]][z,1:100],100))
-    } else { ModifiedData[z,] <- as.numeric(binning(channellist[[ChannelToCluster]][z,1:(max(which(channellist[[ChannelToCluster]][z,]!=0)) + 1)],100))
-    }
+  UnModData <- channellist[[ChannelToCluster]]
+  ModData3 <- UnModData[,1:(ModelVectorLength)]
+  for (row in 1:(dim(UnModData)[1]-1)){
+    ModData3[row,] <- paa(as.numeric(UnModData[row,1:((which(as.numeric(UnModData[row,]) == 0)[1] -1))]),ModelVectorLength)
   }
-  RowNames <- rownames_to_column(channellist[[ChannelToCluster]],'ID')[,1]
-  ModData <- data.frame(ModifiedData,row.names = RowNames)
-  for (row in 1:dim(ModData)[1]) {
-    ModData[row,] <- rescale(as.numeric(ModData[row,]), to = c(0,1))
+  for (row in 1:dim(ModData3)[1]) {
+    ModData3[row,] <- scale(as.numeric(ModData3[row,]))
   }
-  load(ModelDirectory)
-  DataSet <- ModData
+
+  DataSet <- ModData3
 
 
   PredResults <- predict(Model,DataSet)
