@@ -9,6 +9,7 @@ SummaryPlots(
   Names,
   FluorescenceChannel,
   Classify = "NA",
+  FirstChannelDirectories = "NA",
   Measure = "H",
   Scale = "Normal",
   TypeOfData = "Summary",

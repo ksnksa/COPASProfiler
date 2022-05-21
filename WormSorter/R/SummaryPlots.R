@@ -9,7 +9,7 @@
 #'
 #' @return Returns a summary boxplot of the fluorescence.
 #' @export
-SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = 'NA',Measure = 'H',Scale = 'Normal',
+SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = 'NA',FirstChannelDirectories = 'NA',Measure = 'H',Scale = 'Normal',
                           TypeOfData = 'Summary', ModelDirectory = '', Ranges = c(51,75,150,225,500,800)
                     , FluoThreshold = 'NA') {
   if(missing(FileDirectories)){
@@ -64,12 +64,7 @@ SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = '
     } else {
       stop('Incorrect Measure input')
     }
-    if (Classify == 'NA') {
 
-    } else {
-      print('Classification was not perfomed due to input data type -Summary File-')
-
-    }
     for (z in 1:length(ChannelSummary)) {
       IDTOF <- matrix(nrow=which.max(ChannelSummary[[z]][,1]),ncol=8)
       IDTOF <- data.frame(IDTOF)
@@ -129,7 +124,23 @@ SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = '
         IDTOF <- IDTOF[-which(IDTOF[,'PH.EXT'] > 35000),]
 
       }
+      if (Classify == 'NA') {
 
+      } else {
+        if(missing(FirstChannelDirectories)){
+          stop('Missing FirstChannelDirectories input')
+        }  else if(typeof(FirstChannelDirectories) != 'character') {
+          stop('FirstChannelDirectories type is expected to be character, please provide the correct input type')
+        }
+
+        WormIDs <- RunClassification(FirstChannelDirectories[z],ModelDirectory,35000,MinMaxRange[1],MinMaxRange[2],TypeOfData = 'FirstChannel')
+        GoodWormIndex <- WormIDs[[1]]
+        #BadWormIndex <- unname(GoodIDs[1,BadWormIndex])
+        index <- which(IDTOF[,'ID'] %in% GoodWormIndex)
+        Temp <- IDTOF[index,]
+        IDTOF<- Temp
+
+      }
       DataList[[z]] <- IDTOF
     }
 
@@ -139,6 +150,7 @@ SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = '
 
 
   } else if (TypeOfData == 'FullFile') {
+    FullDataFile <- list()
     for (z in 1:length(FileDirectories)) {
       FullFile <- read.delim(FileDirectories[z])
       NewCh0 <- FullFile
@@ -146,24 +158,28 @@ SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = '
         NewCh0[,x] <- na.omit(FullFile[,x])
 
       }
-
+      ChList <- list()
       x <- NewCh0[,-which(grepl('.', colnames(NewCh0), fixed = TRUE))]
       ChExt <- t(x)
       ChExt <- ChExt[-dim(ChExt)[1],]
+      ChList[[1]] <- ChExt
       IDTOF <- matrix(nrow=dim(ChExt)[1],ncol=8)
       IDTOF <- data.frame(IDTOF)
       colnames(IDTOF) <- c('ID','TOF','EXT','G','Y','R','PH.EXT','Stage')
       x <- NewCh0[,which(grepl('.1', colnames(NewCh0), fixed = TRUE))]
       Ch1 <- t(x)
+      ChList[[2]] <- Ch1
       #Ch1 <- Ch1[-dim(Ch1)[1],]
       rownames(Ch1) <- str_replace(rownames(Ch1),fixed('.1'),'')
       x <- NewCh0[,which(grepl('.2', colnames(NewCh0), fixed = TRUE))]
       Ch2 <- t(x)
+      ChList[[3]] <- Ch2
       #Ch2 <- Ch2[-dim(Ch2)[1],]
       rownames(Ch2) <- str_replace(rownames(Ch2),fixed('.2'),'')
       x <- NewCh0[,which(grepl('.3', colnames(NewCh0), fixed = TRUE))]
       Ch3 <- t(x)
-
+      ChList[[4]] <- Ch3
+      FullDataFile[[z]] <- ChList
       #  Ch3 <- Ch3[-dim(Ch3)[1],]
       rownames(Ch3) <- str_replace(rownames(Ch3),fixed('.3'),'')
       IDTOF[,'ID'] <- rownames(ChExt)
@@ -460,6 +476,7 @@ SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = '
     SummaryTable[z,7] <- dim(DataList[[z]])[1]
  }
  Plots[[length(Plots) +1]] <- SummaryTable
+# saving the new unsplit files if using fullfile after classification
 
 
   # stat_summary(geom = "errorbar", fun = mean,  linetype = "dashed",width = 1)
