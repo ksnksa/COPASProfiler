@@ -10,6 +10,8 @@ output:
 
 # COPASProfiler Package Description
 
+COPASProfiler is an R package that can view, filter, classify and analyze COPAS Large Particle Flow Cytometer. Below is a tutorial on how to install the package, get training data and how to use the functions and pipelines. 
+
 # COPASProfiler Model Creation pipeline
 
 ## Introduction 
@@ -21,11 +23,11 @@ The COPAS Large Particle Flow Cytometer (COPAS FC) allows fluorescence screening
 You can access the package's github through this link: https://github.com/ksnksa/COPASProfiler
 You can also run this code to directly download the package in Rstudio.
 ```{r , eval=FALSE}
-devtools::install_github("ksnksa/WormSorter/WormSorter")
+devtools::install_github("ksnksa/COPASProfiler")
 ```
 To load the package, simply run the following code. 
 ```{r, eval=FALSE}
-library("WormSorter")
+library("COPASProfiler")
 ```
 
 ## What data set to use 
