@@ -436,6 +436,7 @@ SummaryPlot <- function(FileDirectory, Name, FluorescenceChannel,Ranges = c(50,7
   }}
   Plots[[6]] <- TOFPlots
   Plots[[7]] <- SummaryTable
+  Plots[[8]] <- IDTOF
   return(Plots)
 }
 

@@ -477,7 +477,7 @@ SummaryPlots <- function (FileDirectories,Names,FluorescenceChannel,Classify = '
  }
  Plots[[length(Plots) +1]] <- SummaryTable
 # saving the new unsplit files if using fullfile after classification
-
+Plots[[length(Plots) + 1]] <- DataList
 
   # stat_summary(geom = "errorbar", fun = mean,  linetype = "dashed",width = 1)
   return(Plots)
