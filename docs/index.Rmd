@@ -23,7 +23,7 @@ The COPAS Large Particle Flow Cytometer (COPAS FC) allows fluorescence screening
 You can access the package's github through this link: https://github.com/ksnksa/COPASProfiler
 You can also run this code to directly download the package in Rstudio.
 ```{r , eval=FALSE}
-devtools::install_github("ksnksa/COPASProfiler")
+devtools::install_github("ksnksa/COPASProfiler/COPASProfiler")
 ```
 To load the package, simply run the following code. 
 ```{r, eval=FALSE}
