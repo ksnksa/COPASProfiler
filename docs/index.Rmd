@@ -51,12 +51,12 @@ The website allows you to visualize the object's channel data.
 ```{r, warning=FALSE, message=FALSE,eval=FALSE}
 
 ##Loading the libraries
-library(ggplot2) #
-library(dplyr) #
-library(scales) #
-library(WormSorter) #
-library(kernlab) #
-library(jmotif) #
+library(ggplot2) 
+library(dplyr) 
+library(scales) 
+library(COPASProfiler) 
+library(kernlab)
+library(jmotif) 
 ```
 
 ### Loading the data 
@@ -113,8 +113,45 @@ WormIDs <- CreateTrainingSetIDs(ModData,GoodIDD)
 
 #### Option 1: Model performance on the same individual set 
 
-##### Input to dictate how much of the training set will be the prediction set 
-##### then run the model on the prediciton set and show results
+To validate the model performance on the same set, one must split the annotated set into two separate sets first. The user can specify what percent of the annotated data set will be the training set. We recommend a 50/50 split for an initial validation test. 
+
+```{r}
+# If the SplitPercent variable is 0.5, then half of the annotated set will 
+# will be a training set and the other half will be a prediction set. 
+SplitPercent <- 0.5
+DataSetList <- RandomTrainingSet(ModData, WormIDs, round(length(WormIDs[[1]]) * SplitPercent),round(length(WormIDs[[2]]) * SplitPercent))
+# TSet is the training set, and PSet is the prediction set. 
+TSet <- DataSetList[[1]]
+PSet <- DataSetList[[2]]
+```
+
+Next we will use the training set to make a classification model. The model will then classify the prediction set. The model performance will be calculated by comparing the predicted labels against the real labels of the prediction set. Additionally, the cross parameter in the "ksvm" function will perform k-fold cross validation which will give us some insight on the model performance . 
+
+```{r}
+# Creating the model using the ksvm function 
+model <- ksvm(as.matrix(TSet[,1:50]), as.factor(TSet[,51]),type = 'C-svc', kernel= "rbfdot",scaled=FALSE, cross = 5)
+# Running the model againts the prediction set. 
+pred <- predict(model,PSet)
+# The positive variable will save the ID names of all profiles that were labeled as "2" or "good" by the model. 
+Positive <- rownames(PSet[which(pred==2),])
+# To find which of these IDs are actually True Positives (or correct classification)
+# We will count how many IDs are in the WormsIDs[[1]] variable which will contain all 
+# the annotated IDs of the good profiles.  
+TP <- sum((Positive %in% WormIDs[[1]]), na.rm = TRUE)
+# we will repeat the same process with the "bad" or "1" profiles. 
+Negative <- rownames(PSet[which(pred==1),])
+TN <- sum(Negative %in% WormIDs[[2]],na.rm = TRUE)# - sum((Negative %in% WormIDs[[1]]), na.rm = TRUE)
+# The code below will calculate the False positive number and the false negative numbers
+FP <- length(Positive) - TP
+FN <- length(Negative) - TN
+# The code below will print out the confusion matrix results of the Model 
+Accuracy <- ((TP + TN) / (length(Positive) + length(Negative))) * 100
+Precision <- TP/(TP + FP)
+Sensitivity <- TP/(TP + FN)
+Specificity <- TN/(TN+FP)
+paste("Model Accuracy is: ", Accuracy, '%','Precision: ',Precision,'%',
+      'Sensitivity: ',Sensitivity,'%','Specificity: ',Specificity,'%',sep='') 
+```
 
 #### Option 2: Loading a prediction set 
 
@@ -123,12 +160,12 @@ The same parameters will be used on the prediction set as previously stated.
 ```{r,eval=FALSE}
 #Channel directory taken from the WormSorter github
 #When using your own data simply change these links to the file directory of the channels. 
-Ch0D <- 'https://raw.githubusercontent.com/ksnksa/WormSorter/main/data/N2/n2_profil_ch0_prf.txt'
-Ch1D <- 'https://raw.githubusercontent.com/ksnksa/WormSorter/main/data/N2/n2_profil_ch1_prf.txt'
-Ch2D <- 'https://raw.githubusercontent.com/ksnksa/WormSorter/main/data/N2/n2_profil_ch2_prf.txt'
-Ch3D <- 'https://raw.githubusercontent.com/ksnksa/WormSorter/main/data/N2/n2_profil_ch3_prf.txt'
+Ch0D2 <- 'https://raw.githubusercontent.com/ksnksa/WormSorter/main/data/N2/n2_profil_ch0_prf.txt'
+Ch1D2 <- 'https://raw.githubusercontent.com/ksnksa/WormSorter/main/data/N2/n2_profil_ch1_prf.txt'
+Ch2D2 <- 'https://raw.githubusercontent.com/ksnksa/WormSorter/main/data/N2/n2_profil_ch2_prf.txt'
+Ch3D2 <- 'https://raw.githubusercontent.com/ksnksa/WormSorter/main/data/N2/n2_profil_ch3_prf.txt'
 #CSV file containing the levels (or annotation) for each worm in our training set. 
-GoodIDD <- 'https://raw.githubusercontent.com/ksnksa/WormSorter/main/data/N2/GoodIDsNew.csv'
+GoodIDD2 <- 'https://raw.githubusercontent.com/ksnksa/WormSorter/main/data/N2/GoodIDsNew.csv'
 ```
 
 ```{r, warning=FALSE, message=FALSE,eval=FALSE}
@@ -148,19 +185,61 @@ ChannelNumber <- 1
 ```{r, warning=FALSE, message=FALSE,eval=FALSE}
 # The ReadChannel function simply takes in the channel directories and returns a list with all
 # the channels data.
-channellist <- ReadChannel(Ch0D,Ch1D,Ch2D,Ch3D)
+channellist2 <- ReadChannel(Ch0D2,Ch1D2,Ch2D2,Ch3D2)
 # The PreProcessData function removes profiles outside of the provided thresholds, removes trailing zeros for each profile
 # applies the PAA function to uniform the length, and applies z-score normalization on the Y axis. 
-ModData <- PreProcessData(channellist, MinLength,MaxLength,MaxAmp, ChannelNumber)
+ModData2 <- PreProcessData(channellist2, MinLength,MaxLength,MaxAmp, ChannelNumber)
 # The CreateTrainingSetIDs function translates the annotated IDs csv 
 # file to the data we have and gives out the index of the worms that are annotated.
-WormIDs <- CreateTrainingSetIDs(ModData,GoodIDD)
+WormIDs2 <- CreateTrainingSetIDs(ModData2,GoodIDD2)
 ```
 
 #### Model performance on the other prediction set  
 
+We have the option to use the previous model we created, or to create a new model using the full annotated data set and validate that model with the new data set. I suggest using the full data set to create a classification model, as they tend to perform better that way. 
+
+```{r}
+# We will recreate the classification model using the first data set we loaded, but this
+# time we will use the full data set instead of splitting it. 
+SplitPercent <- 0.99
+DataSetList <- RandomTrainingSet(ModData, WormIDs, round(length(WormIDs[[1]]) * SplitPercent),round(length(WormIDs[[2]]) * SplitPercent))
+# TSet is the training set, and PSet is the prediction set. 
+TSet <- DataSetList[[1]]
+```
+
+Next let's create the new classification model and validate the performance using the other data set we just loaded. 
+
+```{r}
+# Creating the model using the ksvm function 
+model <- ksvm(as.matrix(TSet[,1:50]), as.factor(TSet[,51]),type = 'C-svc', kernel= "rbfdot",scaled=FALSE, cross = 5)
+# Running the model againts the prediction set. 
+pred <- predict(model,ModData2)
+# The positive variable will save the ID names of all profiles that were labeled as "2" or "good" by the model. 
+Positive <- rownames(ModData2[which(pred==2),])
+# To find which of these IDs are actually True Positives (or correct classification)
+# We will count how many IDs are in the WormsIDs2[[1]] variable which will contain all 
+# the annotated IDs of the good profiles.  
+TP <- sum((Positive %in% WormIDs2[[1]]), na.rm = TRUE)
+# we will repeat the same process with the "bad" or "1" profiles. 
+Negative <- rownames(ModData2[which(pred==1),])
+TN <- sum(Negative %in% WormIDs2[[2]],na.rm = TRUE)# - sum((Negative %in% WormIDs[[1]]), na.rm = TRUE)
+# The code below will calculate the False positive number and the false negative numbers
+FP <- length(Positive) - TP
+FN <- length(Negative) - TN
+# The code below will print out the confusion matrix results of the Model 
+Accuracy <- ((TP + TN) / (length(Positive) + length(Negative))) * 100
+Precision <- TP/(TP + FP)
+Sensitivity <- TP/(TP + FN)
+Specificity <- TN/(TN+FP)
+paste("Model Accuracy is: ", Accuracy, '%','Precision: ',Precision,'%',
+      'Sensitivity: ',Sensitivity,'%','Specificity: ',Specificity,'%',sep='') 
+```
+
 
 #####optimizing model param 
+
+To optimize the parameters of the model, we will be using the mlr library. So we will have to load it first. 
+
 ```{r,eval=FALSE}
 library(mlr)
 ```

@@ -1,0 +1,2312 @@
+---
+title: "BootStrap Percision"
+author: "Khlifa Alnaim"
+date: "12/29/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+#libraries 
+```{r}
+library(ggplot2)
+library(dplyr)
+library(reshape)
+library(WormSorter)
+library(plotly)
+library(utils)
+library(e1071)
+library(prospectr)
+library(reshape)
+
+library(tibble)
+
+library(scales)
+library(future)
+library(BBmisc)
+library(pracma)
+
+```
+
+#Functions
+```{r}
+ReadMtx<- function(Mtx) { 
+  
+  
+  SizeBad <- Mtx[[length(Mtx)-4]]
+  SizeGood <- Mtx[[length(Mtx)-3]]
+  PredSet <- Mtx[[length(Mtx)-2]]
+  RemainingWorms <- Mtx[[length(Mtx)-1]]
+  WormIDs <- Mtx[[length(Mtx)]]
+  #SizeBad <- seq(from = 10, to =length(Mtx)*10, by = 10)
+  #SizeGood <- seq(from = 10, to =dim(Mtx[[1]])[1]*10, by = 10)
+  
+  for (k in 1:length(SizeBad)) {
+    for (l in 1:length(SizeGood)) {
+      if (k == 1 & l == 1) {
+        RowNames <- paste(SizeBad[k],SizeGood[l],sep='-')} else {
+          RowNames <- c(RowNames,paste(SizeBad[k],SizeGood[l],sep='-'))
+        }
+      
+    }}
+  
+  Accuracy <- list()
+  Sensitivity <- list()
+  Specificity <- list()
+  Percision <- list()
+  DataMtx <- matrix(ncol = 4,nrow=4*length(RowNames))
+  DataMtx <- data.frame(DataMtx)
+  colnames(DataMtx) <- c('Test','Names','Mean','SD')
+  DataMtx$Names <- c(RowNames, RowNames,RowNames,RowNames)
+  DataMtx$Test[1:length(RowNames)] <- rep("Accuracy", length(RowNames))
+  DataMtx$Test[(length(RowNames) + 1):(2*length(RowNames))] <- rep("Sensitivity", length(RowNames))
+  #DataMtx$Test[65:128] <- rep("Sensitivity", length(RowNames))
+  
+  DataMtx$Test[((2*length(RowNames)) + 1):(3*length(RowNames))] <- rep("Specificity", length(RowNames))
+  DataMtx$Test[((3*length(RowNames)) + 1):(4*length(RowNames))] <- rep("Percision", length(RowNames))
+  
+  temp <- matrix(ncol=100,nrow=1)
+  temp2 <- matrix(ncol=100,nrow=1)
+  temp3 <-matrix(ncol=100,nrow=1)
+  temp4 <-matrix(ncol=100,nrow=1)
+  AccuracyMeans <-matrix(ncol=length(RowNames),nrow=1)
+  AccuracySD <-matrix(ncol=length(RowNames),nrow=1)
+  SEMean <- matrix(ncol=length(RowNames),nrow=1)
+  SESD <- matrix(ncol=length(RowNames),nrow=1)
+  SPMean <- matrix(ncol=length(RowNames),nrow=1)
+  SPSD <- matrix(ncol=length(RowNames),nrow=1)
+  PEMean <- matrix(ncol=length(RowNames),nrow=1)
+  PESD <- matrix(ncol=length(RowNames),nrow=1)
+  counter <- 1
+  for (k in 1:length(SizeBad)) {
+    for (l in 1:length(SizeGood)) {
+      for (z in 1:100) {
+        # if (z == 1) {
+        #  Vector <- c(TP, TN, length(Positive)-TP,length(Negative)-TN)
+        # Accuracy 
+        temp[1,z] <- (Mtx[[k]][l,c(TRUE,FALSE,FALSE,FALSE)][z] + Mtx[[k]][l,c(FALSE,TRUE,FALSE,FALSE)][z]) / (Mtx[[k]][l,c(TRUE,FALSE,FALSE,FALSE)][z] + Mtx[[k]][l,c(FALSE,TRUE,FALSE,FALSE)][z] + Mtx[[k]][l,c(FALSE,FALSE,TRUE,FALSE)][z] + Mtx[[k]][l,c(FALSE,FALSE,FALSE,TRUE)][z])
+        # Sensitivity
+        temp2[1,z] <- Mtx[[k]][l,c(TRUE,FALSE,FALSE,FALSE)][z] / (Mtx[[k]][l,c(TRUE,FALSE,FALSE,FALSE)][z] + Mtx[[k]][l,c(FALSE,FALSE,FALSE,TRUE)][z])
+        # Specificity  
+        temp3[1,z] <- Mtx[[k]][l,c(FALSE,TRUE,FALSE,FALSE)][z] / (Mtx[[k]][l,c(FALSE,TRUE,FALSE,FALSE)][z] + Mtx[[k]][l,c(FALSE,FALSE,TRUE,FALSE)][z])
+        # Precision 
+        temp4[1,z] <- Mtx[[k]][l,c(TRUE,FALSE,FALSE,FALSE)][z] / (Mtx[[k]][l,c(TRUE,FALSE,FALSE,FALSE)][z] + Mtx[[k]][l,c(FALSE,FALSE,TRUE,FALSE)][z])
+        
+        #} #else {       temp <- (temp + (Mtx[[k]][l,c(TRUE,FALSE,FALSE,FALSE)][z] + Mtx[[k]][l,c(FALSE,TRUE,FALSE,FALSE)][z]) / (Mtx[[k]][l,c(TRUE,FALSE,FALSE,FALSE)][z] + Mtx[[k]][l,c(FALSE,TRUE,FALSE,FALSE)][z] + Mtx[[k]][l,c(FALSE,FALSE,TRUE,FALSE)][z] + Mtx[[k]][l,c(FALSE,FALSE,FALSE,TRUE)][z]))/2
+        
+        #}
+        #rint(temp)
+      }
+      Accuracy[[paste(k,l,sep='-')]]  <- as.numeric(temp[1,])
+      Sensitivity[[paste(k,l,sep='-')]] <- as.numeric(temp2[1,])
+      Specificity[[paste(k,l,sep='-')]] <- as.numeric(temp3[1,])
+      Percision[[paste(k,l,sep='-')]] <- as.numeric(temp4[1,])
+      AccuracyMeans[counter] <- mean(as.numeric(temp),na.rm = TRUE)
+      AccuracySD[counter] <- sd(as.numeric(temp),na.rm = TRUE)
+      SEMean[counter] <- mean(as.numeric(temp2),na.rm = TRUE)
+      SESD[counter] <- sd(as.numeric(temp2),na.rm = TRUE)
+      SPMean[counter] <- mean(as.numeric(temp3),na.rm = TRUE)
+      SPSD[counter] <- sd(as.numeric(temp3),na.rm = TRUE)
+      PEMean[counter] <- mean(as.numeric(temp4),na.rm = TRUE)
+      PESD[counter] <- sd(as.numeric(temp4),na.rm = TRUE)
+      #DataMtx[counter,1] <- mean(as.numeric(temp))
+      #DataMtx[counter,2] <- sd(as.numeric(temp))
+      #DataMtx[counter,3] <- mean(as.numeric(temp2))
+      #DataMtx[counter,4] <- sd(as.numeric(temp2))
+      #DataMtx[counter,5] <- mean(as.numeric(temp3))
+      #DataMtx[counter,6] <- sd(as.numeric(temp3))
+      #DataMtx[counter,7] <- mean(as.numeric(temp4))
+      #DataMtx[counter,8] <- sd(as.numeric(temp4))
+      counter <- counter + 1
+    }}
+  #DataMtx <- data.frame(DataMtx,row.names=RowNames)
+  #DataMtx$names <- rownames(DataMtx)
+  DataMtx[1:length(RowNames),'Mean'] <- t(AccuracyMeans)
+  DataMtx[1:length(RowNames),'SD'] <- t(AccuracySD)
+  DataMtx[(length(RowNames) + 1):(2*length(RowNames)),'Mean'] <- t(SEMean)
+  DataMtx[(length(RowNames) + 1):(2*length(RowNames)),'SD'] <- t(SESD)
+  DataMtx[((2*length(RowNames)) + 1):(3*length(RowNames)),'Mean'] <- t(SPMean)
+  DataMtx[((2*length(RowNames)) + 1):(3*length(RowNames)),'SD'] <- t(SPSD)
+  DataMtx[((3*length(RowNames)) + 1):(4*length(RowNames)),'Mean'] <- t(PEMean)
+  DataMtx[((3*length(RowNames)) + 1):(4*length(RowNames)),'SD'] <- t(PESD)
+  
+  #DataMtx$Test[(length(RowNames) + 1):(2*length(RowNames))] <- rep("Sensitivity", length(RowNames))
+  #DataMtx$Test[65:128] <- rep("Sensitivity", length(RowNames))
+  
+  #DataMtx$Test[((2*length(RowNames)) + 1):(3*length(RowNames))] <- rep("Specificity", length(RowNames))
+  #DataMtx$Test[] <- rep("Percision", length(RowNames))
+  
+  
+  
+  
+  Output <- list()
+  Output[[1]] <- DataMtx
+  Output[[2]] <- PredSet
+  Output[[3]] <- RemainingWorms
+  Output[[4]] <- WormIDs
+  Output[[5]] <- SizeBad
+  Output[[6]] <- SizeGood
+  Output[[7]] <- Accuracy
+  Output[[8]] <- Percision
+  return(Output)
+}
+```
+
+```{r}
+
+#Loading 1117 worms 
+load(file='/Users/khalifaalnaim/Desktop/WormSorter/MtxData/MtxData1117NoF2_poly.Rdata')
+Out <- ReadMtx(Mtx)
+DataMtx <- Out[[1]]
+PredSet <- Out[[2]]
+RemainingWorms <- Out[[3]]
+WormIDs <- Out[[4]]
+SizeBad <- Out[[5]]
+SizeGood <- Out[[6]]
+Accuracy <- Out[[7]]
+Percision <- Out[[8]]
+
+```
+
+#Best combination
+
+```{r}
+temp <- matrix(nrow= 2,ncol=length(Percision))
+temp2 <- matrix(nrow= 2,ncol=length(Accuracy))
+count <- 1
+for (x in 1:length(SizeBad)) { 
+  for (z in 1:length(SizeGood)){ 
+    temp[1,count] <- mean(as.numeric(Percision[[paste(x,z,sep='-')]]))
+    temp[2,count] <- paste(x,z,sep='-')
+    temp2[1,count] <- mean(as.numeric(Accuracy[[paste(x,z,sep='-')]]))
+    temp2[2,count] <- paste(x,z,sep='-')
+    count <- count + 1
+    
+    }
+  
+}
+BestComb <- which(temp[1,] == max(temp[1,which(temp2[1,] >= .9)]))
+
+WormComb <- strsplit(temp[2,BestComb],'-')[[1]]
+WormComb <- c(SizeBad[[as.numeric(WormComb[1])]],SizeGood[[as.numeric(WormComb[2])]])
+PercisionPrint <- as.numeric(temp[1,BestComb]) * 100
+AccuracyPrint <- as.numeric(temp2[1,BestComb]) * 100
+print(paste('Percision is: ',format(round(PercisionPrint, 2), nsmall = 2),'%',' Accuracy is: ',format(round(AccuracyPrint, 2), nsmall = 2),'% ','Number Of Good Worms in training set: ',WormComb[2],' Number of Bad Worms: ', WormComb[1],sep = ''))
+
+```
+
+#Loading other strain/run
+
+```{r}
+
+# Loading different strain and running it on that.. 
+
+MaxAmp <- 35000
+MinLength <- 50
+MaxLength <- 1000
+ChannelToCluster <- 1
+# Which stage the pipeline will work on
+# 1 is for L1, 2 is for L2/3 
+Ch0D <- '/Users/khalifaalnaim/Desktop/WormSorter/COPASData/MOSTIGreen/1118.3C_Ch0.txt'
+Ch1D <- '/Users/khalifaalnaim/Desktop/WormSorter/COPASData/MOSTIGreen/1118.3C_Ch1.txt'
+Ch2D <- '/Users/khalifaalnaim/Desktop/WormSorter/COPASData/MOSTIGreen/1118.3C_Ch2.txt'
+Ch3D <- '/Users/khalifaalnaim/Desktop/WormSorter/COPASData/MOSTIGreen/1118.3C_Ch3.txt'
+channellist <- ReadChannel(Ch0D,Ch1D,Ch2D,Ch3D)
+# Then we use the FilterChannel function to filter the data using our parameters. 
+# The resulting index is the index of the objects we don't want. So we remove those indexes
+# from the channel data. 
+Index <- FilterChannel(channellist[[ChannelToCluster]],MaxAmp,MinLength,MaxLength)
+channellist[[ChannelToCluster]] <- as.data.frame(channellist[[ChannelToCluster]][-c(Index),])
+ModifiedData <- matrix(nrow= dim(channellist[[ChannelToCluster]])[1], ncol =100)
+for (z in 1:dim(channellist[[ChannelToCluster]])[1]) {
+  if (max(which(channellist[[ChannelToCluster]][z,]!=0)) < 100 ) { 
+    ModifiedData[z,] <- as.numeric(binning(channellist[[ChannelToCluster]][z,1:100],100))
+  } else { ModifiedData[z,] <- as.numeric(binning(channellist[[ChannelToCluster]][z,1:(max(which(channellist[[ChannelToCluster]][z,]!=0)) + 1)],100))
+  }
+  
+  
+}
+RowNames <- rownames_to_column(channellist[[ChannelToCluster]],'ID')[,1]
+
+#ModifiedData <- StageList[[4]]
+ModData <- data.frame(ModifiedData,row.names = RowNames)
+#For normalizing the amplitude
+
+for (row in 1:dim(ModData)[1]) {
+  ModData[row,] <- rescale(as.numeric(ModData[row,]), to = c(0,1))
+}
+```
+
+
+
+
+#Bootstrapping on other strains/runs
+
+```{r}
+AccuracyResults <- matrix(nrow=1,ncol=100)
+PrecisionResults <- matrix(nrow=1,ncol=100)
+for (z in 1:100) {
+TrainingSet <- rbind(RemainingWorms,PredSet)
+TSet <- RandomTrainingSet(TrainingSet,WormIDs,WormComb[2],WormComb[1])[[1]]
+#TSet <- RandomTrainingSet(TrainingSet,WormIDs,SizeGood[length(SizeGood)],SizeBad[length(SizeBad)])[[1]]
+# Creating the model 
+
+TrainingSet <- TSet
+#Factor <- as.factor(TrainingSet$Factor)
+model <- svm(Factor~.,data = TrainingSet,
+             type = 'C-classification',
+             scale=FALSE,
+             kernel="linear")
+output <- list()
+#output[[1]] <- predict(model, PSet)
+output[[2]] <- model
+
+# Running the prediction 
+
+PredResults <- predict(output[[2]],ModData)
+#Pos <- rownames(ModData[which(PredResults==2),])
+#Neg <- rownames(ModData[which(PredResults==1),])
+Positive <- rownames(ModData[which(PredResults==2),])
+TP <- sum((Positive %in% WormIDs2[[1]]), na.rm = TRUE)
+Negative <- rownames(ModData[which(PredResults==1),])
+TN <- sum(Negative %in% WormIDs2[[2]],na.rm = TRUE)# - sum((Negative %in% WormIDs[[1]]), na.rm = TRUE)
+AccuracyResults[1,z] <- (TP + TN) / (length(Positive) + length(Negative))
+# Accuracy after the filtering is  0.8921283 
+PrecisionResults[1,z] <- TP/length(Positive)
+
+}
+AccuracyMean <- mean(AccuracyResults)
+PrecisionMean <- mean(PrecisionResults)
+
+```
+
+# For highest combo precision, lets try best accuracy now 
+AccuracyMean
+[1] 0.8907576
+> PrecisionMean
+[1] 0.8839966
+
+
+mtx <- matrix(nrow=2,ncol=238+422)
+mtx[1,423:660] <- Neg
+mtx[2,423:660] <- 'Bad'
+write.csv(mtx,file='/Users/khalifaalnaim/Desktop/1117On1118.csv')
+
+# Results
+
+Mtx <- read.csv('/Users/khalifaalnaim/Desktop/GoodIDs1118Results.csv')
+FP <- length(which(Mtx[2,] == 'FP'))
+FN <- length(which(Mtx[2,] == 'FN'))
+TP <- length(which(Mtx[2,] == 'TP'))
+TN <- length(which(Mtx[2,] == 'TN'))
+print(paste('Accuracy is: ',100 * round((TP + TN)/(TP + TN + FN + FP),4),'%',sep=''))
+print(paste('Sensitivity is: ',100 * round((TP)/(TP + FN ),4),'%',sep=''))
+print(paste('Specificity is: ',100 * round((TN)/(TN + FP),4),'%',sep=''))
+print(paste('Percision is: ',100 * round((TP)/(TP + FP),4),'%',sep=''))
+#while the thingy here is "Accuracy is: 90.44%"
+# Creating new leveling 
+GoodWormIDs <- Mtx[1,which(Mtx[2,] == 'TP' | Mtx[2,] == 'FN')]
+GoodWormIDs <- as.character(GoodWormIDs)
+BadWormIDs <- Mtx[1,which(Mtx[2,] == 'FP' | Mtx[2,] == 'TN')]
+BadWormIDs <- as.character(BadWormIDs)
+WormIDs2[[1]] <- GoodWormIDs
+WormIDs2[[2]] <- BadWormIDs
+
+
+
+#with 50,50, we get 0.86 precision 
+# with 25 good and 55 bad, we get 0.92 precision without filtering..
+# with 25 good and 55 bad, we get 0.93 precision with filtering..
+Accuracy
+Precision
+
+```{r}
+Ch0D <- '/Users/khalifaalnaim/Desktop/WormSorter/COPASData/MOSTIGreen/1118.3C_Ch0.txt'
+Ch1D <- '/Users/khalifaalnaim/Desktop/WormSorter/COPASData/MOSTIGreen/1118.3C_Ch1.txt'
+Ch2D <- '/Users/khalifaalnaim/Desktop/WormSorter/COPASData/MOSTIGreen/1118.3C_Ch2.txt'
+Ch3D <- '/Users/khalifaalnaim/Desktop/WormSorter/COPASData/MOSTIGreen/1118.3C_Ch3.txt'
+  channellist <- list()
+  channellist <- ReadChannel(Ch0D,Ch1D,Ch2D,Ch3D)
+  #ModData <- list()
+ # for (x in 1:4) {
+    Index <- FilterChannel(channellist[[x]],MaxAmp,MinLength,MaxLength)
+    channellist[[x]] <- as.data.frame(channellist[[x]][-c(Index),])
+    ModifiedData <- matrix(nrow= dim(channellist[[x]])[1], ncol =100)
+    for (z in 1:dim(channellist[[x]])[1]) {
+      if (max(which(channellist[[x]][z,]!=0)) < 100 ) { 
+        ModifiedData[z,] <- as.numeric(binning(channellist[[x]][z,1:100],100))
+      } else { ModifiedData[z,] <- as.numeric(binning(channellist[[x]][z,1:(max(which(channellist[[x]][z,]!=0)) + 1)],100))
+      }
+    }
+    RowNames <- rownames_to_column(channellist[[x]],'ID')[,1]
+    ModData <- data.frame(ModifiedData,row.names = RowNames)
+   # for (row in 1:dim(ModData[[x]])[1]) {
+  #    ModData[[x]][row,] <- rescale(as.numeric(ModData[[x]][row,]), to = c(0,1))
+   # }
+  #}
+ 
+
+```
+
+#Creating training set, and calculating dtw
+
+```{r}
+TrainingSet <- rbind(RemainingWorms,PredSet)
+Results <- RandomTrainingSet(TrainingSet,WormIDs,50,50)
+TSet <- Results[[1]]
+PSet <- Results[[2]]
+```
+
+```{r}
+#DTW as features.. 
+TrainingSetDTW <- TSet[,1:100]
+NewTSetDTW <- matrix(nrow=dim(TSet)[1],ncol=dim(TSet)[1])
+for (b in 1:dim(TSet)[1]) {
+  temp <- as.numeric(TSet[b,1:100])
+for (z in 1:dim(TSet)[1]) {
+NewTSetDTW[b,z] <- dtw(temp,as.numeric(TSet[z,1:100]))$distance
+}
+}
+NewTSetDTW <- as.data.frame(NewTSetDTW)
+rownames(NewTSetDTW) <- rownames(TSet)
+
+```
+
+#test set
+```{r}
+PSet <- PredSet[1:100,1:100]
+PSetDTWResults <- matrix(nrow=dim(PSet)[1],ncol=dim(TSet)[1])
+for (b in 1:dim(PSet)[1]) {
+ temp <- as.numeric(PSet[b,1:100])
+   
+for (z in 1:dim(TSet)[1]) {
+PSetDTWResults[b,z] <- dtw(temp,as.numeric(TSet[z,1:100]))$distance
+}
+}
+PSetDTWResults <- as.data.frame(PSetDTWResults)
+rownames(PSetDTWResults) <- rownames(PSet)
+```
+
+```{r}
+
+NewTSetDTW$class <- as.factor(c(rep(1,100),rep(2,100)))
+#Factor <- as.factor(TrainingSet$Factor)
+#Results <- RandomTrainingSet(wtData,WormIDs,100,100)
+#TSet2 <- Results[[1]]
+#PSet2 <- Results[[2]] 
+
+model <- svm(class~.,data = NewTSetDTW,
+             type = 'C-classification',
+             scale=FALSE,
+             kernel="polynomial")
+output <- list()
+output[[1]] <- predict(model, PSetDTWResults)
+output[[2]] <- model
+
+# Running the prediction 
+
+PredResults <- output[[1]]
+Positive <- rownames(ModData[which(PredResults==2),])
+TP <- sum((Positive %in% WormIDs[[1]]), na.rm = TRUE)
+Negative <- rownames(ModData[which(PredResults==1),])
+TN <- sum(Negative %in% WormIDs[[2]],na.rm = TRUE)# - sum((Negative %in% WormIDs[[1]]), na.rm = TRUE)
+AccuracyResults <- (TP + TN) / (length(Positive) + length(Negative))
+# Accuracy after the filtering is  0.8921283 
+PrecisionResults<- TP/length(Positive)
+```
+
+
+```{r}
+AccuracyResults <- matrix(nrow=1,ncol=100)
+PrecisionResults <- matrix(nrow=1,ncol=100)
+for (z in 1:100) {
+#TrainingSet <- rbind(RemainingWorms,PredSet)
+#TSet <- RandomTrainingSet(NewTSetDTW,WormIDs,105,0)[[1]]
+#TSet <- RandomTrainingSet(TrainingSet,WormIDs,SizeGood[length(SizeGood)],SizeBad[length(SizeBad)])[[1]]
+# Creating the model 
+
+TrainingSet <- TSet
+#Factor <- as.factor(TrainingSet$Factor)
+model <- svm(Factor~.,data = TrainingSet,
+             type = 'C-classification',
+             scale=FALSE,
+             kernel="Polynomial")
+output <- list()
+output[[1]] <- predict(model, PSetDTWResults)
+output[[2]] <- model
+
+# Running the prediction 
+
+PredResults <- output[[1]]
+Positive <- rownames(ModData[which(PredResults==2),])
+TP <- sum((Positive %in% WormIDs[[1]]), na.rm = TRUE)
+Negative <- rownames(ModData[which(PredResults==1),])
+TN <- sum(Negative %in% WormIDs[[2]],na.rm = TRUE)# - sum((Negative %in% WormIDs[[1]]), na.rm = TRUE)
+AccuracyResults[1,z] <- (TP + TN) / (length(Positive) + length(Negative))
+# Accuracy after the filtering is  0.8921283 
+PrecisionResults[1,z] <- TP/length(Positive)
+
+}
+AccuracyMean <- mean(AccuracyResults)
+PrecisionMean <- mean(PrecisionResults)
+```
+
+#following an example 
+
+```{r}
+wtData <- as.data.frame(wtData)
+rownames(wtData) <- rownames(TrainingSet)
+classId <- matrix(nrow=1,ncol=dim(wtData)[1])
+for (x in 1:dim(wtData)) {
+  if (rownames(wtData)[x] %in% WormIDs[[1]]) {
+    classId[1,x] <- 2
+  } else {
+    classId[1,x] <- 1
+  }
+  
+  
+  
+}
+```
+
+
+```{r}
+# extracting DWT coefficients (with Haar filter)
+library(wavelets)
+
+wtData <- NULL
+sc <- TrainingSet
+for (i in 1:nrow(sc)) {
+
+ a <- t(sc[i,])
+
+wt <- dwt(a, filter='haar', boundary='periodic')
+
+wtData <- rbind(wtData, unlist(c(wt@W,wt@V[[wt@level]])))
+
+}
+
+ wtData <- as.data.frame(wtData)
+
+ 
+
+# set class labels into categorical values
+
+wtSc <- data.frame(cbind(as.numeric(classId), wtData))
+
+ 
+
+# build a decision tree with ctree() in package party
+
+library(party)
+
+ct <- ctree(classId ~ ., data=wtSc,controls = ctree_control(minsplit=2, minbucket=2, maxdepth=5))
+
+pClassId <- predict(ct)
+
+ 
+
+# check predicted classes against original class labels
+
+table(classId, pClassId)
+# accuracy
+
+(sum(classId==pClassId)) / nrow(wtSc)
+
+```
+
+```{r}
+NewTrainingSet <- TrainingSet
+for (x in 1:dim(NewTrainingSet)) {
+  if (rownames(NewTrainingSet)[x] %in% WormIDs[[1]]) {
+    NewTrainingSet$Factor[x] <- 2
+  } else {
+    NewTrainingSet$Factor[x] <- 1
+  }
+}
+```
+
+
+```{r}
+Accuracy <- matrix(nrow=50,ncol=100)
+for (k in 1:50) {
+  for (z in 1:100) {
+  ran <- sample(1:nrow(NewTrainingSet), 0.8 * nrow(NewTrainingSet))
+TSet <- NewTrainingSet[ran,1:100]
+PSet <- NewTrainingSet[-ran,1:100]
+TSet_Target <- NewTrainingSet$Factor[ran]
+PSet_Target <- NewTrainingSet$Factor[-ran]
+pr <- knn(TSet,PSet,cl=TSet_Target, k=k)
+tab <- table(pr,PSet_Target)
+ accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+ Accuracy[k,z] <- accuracy(tab)
+ 
+}
+}
+
+ 
+```
+
+```{r}
+for (x in 1:50) {
+  print(mean(Accuracy[x,]))
+}
+```
+
+```{r}
+model1 <- ksvm(as.matrix(NewTrainingSet[,1:100]), as.factor(NewTrainingSet[,101]),type = 'C-svc', kernel= "tanhdot",C=4,scaled=FALSE)
+model2 <- ksvm(as.matrix(NewTrainingSet[,1:100]), as.factor(NewTrainingSet[,101]),type = 'C-svc', kernel= "splinedot",C=4,scaled=FALSE)
+model3 <- ksvm(as.matrix(NewTrainingSet[,1:100]), as.factor(NewTrainingSet[,101]),type = 'C-svc', kernel= "besseldot",C=4,scaled=FALSE)
+model4 <- ksvm(as.matrix(NewTrainingSet[,1:100]), as.factor(NewTrainingSet[,101]),type = 'C-svc', kernel= "laplacedot",C=4,scaled=FALSE)
+a1 = colSums(model1@xmatrix[[1]] * model1@coef[[1]]) 
+a2 = colSums(model2@xmatrix[[1]] * model2@coef[[1]]) 
+a3 = colSums(model3@xmatrix[[1]] * model3@coef[[1]])
+a4 = colSums(model4@xmatrix[[1]] * model4@coef[[1]])
+
+# calculate the constant a0 (-intercept of b in model) for each model
+a01 = -model1@b 
+a02 = -model2@b 
+a03 = -model3@b;
+a04 = -model4@b
+
+# predict is a generic function for predictions from the results of various model fitting functions.
+pred1 <- predict(model1,NewTrainingSet[,1:100])
+pred2 <- predict(model2,NewTrainingSet[,1:100])
+pred3 <- predict(model3,NewTrainingSet[,1:100])
+pred4 <- predict(model4,NewTrainingSet[,1:100])
+sum(pred1 == NewTrainingSet[,101]) / nrow(NewTrainingSet)
+sum(pred2 == NewTrainingSet[,101]) / nrow(NewTrainingSet)
+sum(pred3 == NewTrainingSet[,101]) / nrow(NewTrainingSet)
+sum(pred4 == NewTrainingSet[,101]) / nrow(NewTrainingSet)
+
+
+#obtain median of training set 
+# 
+```
+```{r}
+#calculate median of good set
+TSetGood <- NewTrainingSet[which(NewTrainingSet[,101] == '2'),1:100]
+GoodMedian <- 1:100
+for (x in 1:100) {
+  GoodMedian[x] <- mean(TSetGood[,x])
+}
+```
+
+
+
+```{r}
+#calculate median of Bad set
+TSetBad <- NewTrainingSet[which(NewTrainingSet[,101] == '1'),1:100]
+BadMedian <- 1:100
+for (x in 1:100) {
+  BadMedian[x] <- mean(TSetBad[,x])
+}
+```
+
+##making the other references 
+
+```{r}
+BadMedian2 <- BadMedian[100:1]
+BadMedian3 <- c(BadMedian[1:49],BadMedian2[50:100])
+```
+
+```{r}
+TSetGood <- ModData
+dim(TSetGood)
+```
+
+
+```{r}
+#testing if DTW can do classificaiton on its own lol
+#First On TSetGood
+Results <- 1:660
+for (x in 1:660) {
+  Results[x] <- dtw(as.numeric(TSetGood[x,]),GoodMedian)$distance
+}
+```
+
+```{r}
+#testing if DTW can do classificaiton on its own lol
+#First On TSetGood
+Results2 <- matrix(nrow=660, ncol=3)
+for (x in 1:660) {
+  Results2[x,1] <- dtw(as.numeric(TSetGood[x,]),BadMedian)$distance
+  Results2[x,2] <- dtw(as.numeric(TSetGood[x,]),BadMedian2)$distance
+  Results2[x,3] <- dtw(as.numeric(TSetGood[x,]),BadMedian3)$distance
+}
+```
+
+```{r}
+ClassificationGood <- 1:660
+temp <- 0 
+for (x in 1:660){
+  if (Results[x] > Results2[x,1]){
+    temp <- temp + 1
+  } 
+   if (Results[x] > Results2[x,2] ){
+    temp <- temp + 1
+   }
+   if ( Results[x] > Results2[x,3]){
+    temp <- temp + 1
+  }
+  if (temp >= 1) {
+     ClassificationGood[x] <- 'Bad'
+  } else {
+     ClassificationGood[x] <- 'Good'
+  }
+  temp <- 0
+}
+length(which(ClassificationGood == 'Bad'))
+```
+
+
+```{r}
+#testing if DTW can do classificaiton on its own lol
+#First On TSetBad
+Results <- 1:689
+for (x in 1:689) {
+  Results[x] <- dtw(as.numeric(TSetBad[x,]),GoodMedian)$distance
+}
+```
+
+
+```{r}
+#testing if DTW can do classificaiton on its own lol
+#First On TSetBad
+Results2 <- 1:689
+for (x in 1:689) {
+  Results2[x] <- dtw(as.numeric(TSetBad[x,]),BadMedian)$distance
+}
+```
+
+```{r}
+ClassificationBad <- 1:689
+for (x in 1:689){
+  if (Results[x] > Results2[x]){
+    ClassificationBad[x] <- 'Bad'
+  } else {
+     ClassificationBad[x] <- 'Good'
+  }
+}
+```
+
+#Notes
+
+I think there is potential
+My idea is to create 3 references for bad worms, and one for good worms
+1 is spike on the left
+2 is spike on the right
+3 is spikes in both sides
+
+
+
+```{r}
+#Testing the new models againts another strain 
+ModDataTest <- ModData
+for (x in 1:dim(ModDataTest)) {
+  if (rownames(ModDataTest)[x] %in% WormIDs2[[1]]) {
+    ModDataTest$Factor[x] <- 2
+  } else {
+    ModDataTest$Factor[x] <- 1
+  }
+}
+
+```
+
+```{r}
+#Running model3 on the 1118 run 
+pred1 <- predict(model1,ModDataTest[,1:100])
+pred2 <- predict(model2,ModDataTest[,1:100])
+pred3 <- predict(model3,ModDataTest[,1:100])
+pred4 <- predict(model4,ModDataTest[,1:100])
+sum(pred1 == ModDataTest[,101]) / nrow(ModDataTest)
+sum(pred2 == ModDataTest[,101]) / nrow(ModDataTest)
+sum(pred3 == ModDataTest[,101]) / nrow(ModDataTest)
+sum(pred4 == ModDataTest[,101]) / nrow(ModDataTest)
+```
+
+```{r}
+Positive <- rownames(ModDataTest[which(pred4==2),])
+TP <- sum((Positive %in% WormIDs2[[1]]), na.rm = TRUE)
+Negative <- rownames(ModDataTest[which(pred4==1),])
+TN <- sum(Negative %in% WormIDs2[[2]],na.rm = TRUE)# - sum((Negative %in% WormIDs[[1]]), na.rm = TRUE)
+(TP + TN) / (length(Positive) + length(Negative))
+# Accuracy after the filtering is  0.8921283 
+TP/length(Positive)
+
+```
+
+#Testing different variables for svm 
+```{r}
+ResultsAcc <- matrix(nrow=100,ncol=4)
+ResultsPre <- matrix(nrow=100,ncol=4)
+for (C in 1:100) {
+  model1 <- ksvm(as.matrix(NewTrainingSet[,1:100]), as.factor(NewTrainingSet[,101]),type = 'C-svc', kernel= 'vanilladot',C=C,scaled=FALSE)
+model2 <- ksvm(as.matrix(NewTrainingSet[,1:100]), as.factor(NewTrainingSet[,101]),type = 'C-svc', kernel= 'laplacedot',C=C,scaled=FALSE)
+model3 <- ksvm(as.matrix(NewTrainingSet[,1:100]), as.factor(NewTrainingSet[,101]),type = 'C-svc', kernel= 'rbfdot',C=C,scaled=FALSE)
+model4 <- ksvm(as.matrix(NewTrainingSet[,1:100]), as.factor(NewTrainingSet[,101]),type = 'C-svc', kernel= 'polydot',C=C,scaled=FALSE)
+pred1 <- predict(model1,ModDataTest[,1:100])
+pred2 <- predict(model2,ModDataTest[,1:100])
+pred3 <- predict(model3,ModDataTest[,1:100])
+pred4 <- predict(model4,ModDataTest[,1:100])
+ResultsAcc[C,1] <- sum(pred1 == ModDataTest[,101]) / nrow(ModDataTest)
+ResultsAcc[C,2] <- sum(pred2 == ModDataTest[,101]) / nrow(ModDataTest)
+ResultsAcc[C,3] <- sum(pred3 == ModDataTest[,101]) / nrow(ModDataTest)
+ResultsAcc[C,4] <- sum(pred4 == ModDataTest[,101]) / nrow(ModDataTest)
+}
+
+```
+
+```{r}
+model3 <- ksvm(as.matrix(NewTrainingSet[,1:100]), as.factor(NewTrainingSet[,101]),type = 'C-svc', kernel= 'rbfdot',C=4,scaled=FALSE)
+pred3 <- predict(model3,ModDataTest[,1:100])
+sum(pred3 == ModDataTest[,101]) / nrow(ModDataTest)
+Positive <- rownames(ModDataTest[which(pred3==2),])
+TP <- sum((Positive %in% WormIDs2[[1]]), na.rm = TRUE)
+Negative <- rownames(ModDataTest[which(pred3==1),])
+TN <- sum(Negative %in% WormIDs2[[2]],na.rm = TRUE)# - sum((Negative %in% WormIDs[[1]]), na.rm = TRUE)
+(TP + TN) / (length(Positive) + length(Negative))
+# Accuracy after the filtering is  0.8921283 
+TP/length(Positive)
+```
+
+[1] 0.9151515
+[1] 0.9136364
+[1] 0.9448819
+
+
+#switching the training and test sets 
+
+```{r}
+
+model1 <- ksvm(as.matrix(ModDataTest[,1:100]), as.factor(ModDataTest[,101]),type = 'C-svc', kernel= 'vanilladot',C=1,scaled=FALSE)
+model2 <- ksvm(as.matrix(ModDataTest[,1:100]), as.factor(ModDataTest[,101]),type = 'C-svc', kernel= 'laplacedot',C=1,scaled=FALSE)
+model3 <- ksvm(as.matrix(ModDataTest[,1:100]), as.factor(ModDataTest[,101]),type = 'C-svc', kernel= 'rbfdot',C=4,scaled=FALSE)
+model4 <- ksvm(as.matrix(ModDataTest[,1:100]), as.factor(ModDataTest[,101]),type = 'C-svc', kernel= 'polydot',C=1,scaled=FALSE)
+a1 = colSums(model1@xmatrix[[1]] * model1@coef[[1]]) 
+a2 = colSums(model2@xmatrix[[1]] * model2@coef[[1]]) 
+a3 = colSums(model3@xmatrix[[1]] * model3@coef[[1]])
+a4 = colSums(model4@xmatrix[[1]] * model4@coef[[1]])
+
+# calculate the constant a0 (-intercept of b in model) for each model
+a01 = -model1@b 
+a02 = -model2@b 
+a03 = -model3@b
+a04 = -model4@b
+
+# predict is a generic function for predictions from the results of various model fitting functions.
+pred1 <- predict(model1,ModDataTest[,1:100])
+pred2 <- predict(model2,ModDataTest[,1:100])
+pred3 <- predict(model3,ModDataTest[,1:100])
+pred4 <- predict(model4,ModDataTest[,1:100])
+sum(pred1 == ModDataTest[,101]) / nrow(ModDataTest)
+sum(pred2 == ModDataTest[,101]) / nrow(ModDataTest)
+sum(pred3 == ModDataTest[,101]) / nrow(ModDataTest)
+sum(pred4 == ModDataTest[,101]) / nrow(ModDataTest)
+```
+
+
+
+```{r}
+model3 <- ksvm(as.matrix(ModDataTest[,1:100]), as.factor(ModDataTest[,101]),type = 'C-svc', kernel= 'rbfdot',C=4,scaled=FALSE)
+pred3 <- predict(model3,NewTrainingSet[,1:100])
+sum(pred3 == NewTrainingSet[,101]) / nrow(NewTrainingSet)
+Positive <- rownames(NewTrainingSet[which(pred3==2),])
+TP <- sum((Positive %in% WormIDs[[1]]), na.rm = TRUE)
+Negative <- rownames(NewTrainingSet[which(pred3==1),])
+TN <- sum(Negative %in% WormIDs[[2]],na.rm = TRUE)# - sum((Negative %in% WormIDs[[1]]), na.rm = TRUE)
+(TP + TN) / (length(Positive) + length(Negative))
+# Accuracy after the filtering is  0.8921283 
+TP/length(Positive)
+```
+
+
+
+## Loading 1110.1C
+
+```{r}
+
+MaxAmp <- 35000
+MinLength <- 50
+MaxLength <- 1000
+ChannelToCluster <- 1
+# Which stage the pipeline will work on
+# 1 is for L1, 2 is for L2/3 
+Ch0D <- '/Users/khalifaalnaim/Desktop/WormSorter/COPASData/MOSTIGreen/1110.1C red 500 green 600 gain 2_ch0_prf.txt'
+Ch1D <- '/Users/khalifaalnaim/Desktop/WormSorter/COPASData/MOSTIGreen/1110.1C red 500 green 600 gain 2_ch1_prf.txt'
+Ch2D <- '/Users/khalifaalnaim/Desktop/WormSorter/COPASData/MOSTIGreen/1110.1C red 500 green 600 gain 2_ch2_prf.txt'
+Ch3D <- '/Users/khalifaalnaim/Desktop/WormSorter/COPASData/MOSTIGreen/1110.1C red 500 green 600 gain 2_ch3_prf.txt'
+WormIDD <- '/Users/khalifaalnaim/Desktop/WormSorter/AnnotatedIDs/1110.1CIDs.csv'
+channellist <- ReadChannel(Ch0D,Ch1D,Ch2D,Ch3D)
+# Then we use the FilterChannel function to filter the data using our parameters. 
+# The resulting index is the index of the objects we don't want. So we remove those indexes
+# from the channel data. 
+#Index <- FilterChannel(channellist[[ChannelToCluster]],MaxAmp,MinLength,MaxLength)
+#channellist[[ChannelToCluster]] <- as.data.frame(channellist[[ChannelToCluster]][-c(Index),])
+ModifiedData <- matrix(nrow= dim(channellist[[ChannelToCluster]])[1], ncol =100)
+
+
+
+
+for (z in 1:dim(channellist[[ChannelToCluster]])[1]) {
+  if (max(which(channellist[[ChannelToCluster]][z,]!=0)) < 100 ) { 
+    ModifiedData[z,] <- as.numeric(binning(channellist[[ChannelToCluster]][z,1:100],100))
+  } else {
+    NumberToFind <- channellist[[ChannelToCluster]][z,1]
+  lengthofvector <- dim(channellist[[ChannelToCluster]][z,])[2]
+  Index <- which.min(abs(channellist[[ChannelToCluster]][z,100:lengthofvector]-NumberToFind))
+  Index <- Index + 49
+  channellist[[ChannelToCluster]][z,(Index + 1):lengthofvector] <- 0  
+      ModifiedData[z,] <- as.numeric(binning(channellist[[ChannelToCluster]][z,1:(max(which(channellist[[ChannelToCluster]][z,]!=0)) + 1)],100))
+  }
+  
+  
+}
+RowNames <- rownames_to_column(channellist[[ChannelToCluster]],'ID')[,1]
+
+#ModifiedData <- StageList[[4]]
+ModData2 <- data.frame(ModifiedData,row.names = RowNames)
+#For normalizing the amplitude
+
+for (row in 1:dim(ModData2)[1]) {
+  ModData2[row,] <- rescale(as.numeric(ModData2[row,]), to = c(0,1))
+}
+```
+
+
+```{r}
+#Getting the classes
+WormIDD <- '/Users/khalifaalnaim/Desktop/WormSorter/AnnotatedIDs/1110.1CIDs.csv'
+WormIDs_1110 <- CreateTrainingSetIDs(ModData2, WormIDD)
+#ModData2 <- ModData2[1:262,]
+
+```
+
+```{r}
+ModDataTest2 <- ModData2
+for (x in 1:dim(ModDataTest2)) {
+  if (rownames(ModDataTest2)[x] %in% WormIDs_1110[[1]]) {
+    ModDataTest2$Factor[x] <- 2
+  } else {
+    ModDataTest2$Factor[x] <- 1
+  }
+}
+
+```
+
+```{r}
+## 1110 on it self 
+model1 <- ksvm(as.matrix(ModDataTest2[,1:50]), as.factor(ModDataTest2[,51]),type = 'C-svc', kernel= 'tanhdot',C=4,scaled=FALSE)
+model2 <- ksvm(as.matrix(ModDataTest2[,1:50]), as.factor(ModDataTest2[,51]),type = 'C-svc', kernel= 'laplacedot',C=4,scaled=FALSE)
+model3 <- ksvm(as.matrix(ModDataTest2[,1:50]), as.factor(ModDataTest2[,51]),type = 'C-svc', kernel= 'rbfdot',C=4,scaled=FALSE)
+model4 <- ksvm(as.matrix(ModDataTest2[,1:50]), as.factor(ModDataTest2[,51]),type = 'C-svc', kernel= 'polydot',C=4,scaled=FALSE)
+a1 = colSums(model1@xmatrix[[1]] * model1@coef[[1]]) 
+a2 = colSums(model2@xmatrix[[1]] * model2@coef[[1]]) 
+a3 = colSums(model3@xmatrix[[1]] * model3@coef[[1]])
+a4 = colSums(model4@xmatrix[[1]] * model4@coef[[1]])
+
+# calculate the constant a0 (-intercept of b in model) for each model
+a01 = -model1@b 
+a02 = -model2@b 
+a03 = -model3@b
+a04 = -model4@b
+
+# predict is a generic function for predictions from the results of various model fitting functions.
+pred1 <- predict(model1,ModDataTest2[,1:50])
+pred2 <- predict(model2,ModDataTest2[,1:50])
+pred3 <- predict(model3,ModDataTest2[,1:50])
+pred4 <- predict(model4,ModDataTest2[,1:50])
+sum(pred1 == ModDataTest2[,51]) / nrow(ModDataTest2)
+sum(pred2 == ModDataTest2[,51]) / nrow(ModDataTest2)
+sum(pred3 == ModDataTest2[,51]) / nrow(ModDataTest2)
+sum(pred4 == ModDataTest2[,51]) / nrow(ModDataTest2)
+```
+
+# 1117 on 1110.1c 
+
+```{r}
+pred1 <- predict(model1,ModDataTest2[,1:100])
+pred2 <- predict(model2,ModDataTest2[,1:100])
+pred3 <- predict(model3,ModDataTest2[,1:100])
+pred4 <- predict(model4,ModDataTest2[,1:100])
+sum(pred1 == ModDataTest2[,101]) / nrow(ModDataTest2)
+sum(pred2 == ModDataTest2[,101]) / nrow(ModDataTest2)
+sum(pred3 == ModDataTest2[,101]) / nrow(ModDataTest2)
+sum(pred4 == ModDataTest2[,101]) / nrow(ModDataTest2)
+```
+
+```{r}
+model2 <- ksvm(as.matrix(NewTrainingSet[,1:100]), as.factor(NewTrainingSet[,101]),type = 'C-svc', kernel= 'laplacedot',C=4,scaled=FALSE)
+pred2 <- predict(model2,ModDataTest2[,1:100])
+sum(pred2 == ModDataTest2[,51]) / nrow(ModDataTest2)
+Positive <- rownames(ModDataTest2[which(pred2==2),])
+TP <- sum((Positive %in% WormIDs_1110[[1]]), na.rm = TRUE)
+Negative <- rownames(ModDataTest2[which(pred2==1),])
+TN <- sum(Negative %in% WormIDs_1110[[2]],na.rm = TRUE)# - sum((Negative %in% WormIDs[[1]]), na.rm = TRUE)
+(TP + TN) / (length(Positive) + length(Negative))
+# Accuracy after the filtering is  0.8921283 
+TP/length(Positive)
+```
+
+## On 1118 
+
+```{r}
+
+MaxAmp <- 35000
+MinLength <- 50
+MaxLength <- 1000
+ChannelToCluster <- 1
+# Which stage the pipeline will work on
+# 1 is for L1, 2 is for L2/3 
+Ch0D <- '/Users/khalifaalnaim/Desktop/WormSorter/COPASData/MOSTIGreen/1118.3C_Ch0.txt'
+Ch1D <- '/Users/khalifaalnaim/Desktop/WormSorter/COPASData/MOSTIGreen/1118.3C_Ch1.txt'
+Ch2D <- '/Users/khalifaalnaim/Desktop/WormSorter/COPASData/MOSTIGreen/1118.3C_Ch2.txt'
+Ch3D <- '/Users/khalifaalnaim/Desktop/WormSorter/COPASData/MOSTIGreen/1118.3C_Ch3.txt'
+channellist <- ReadChannel(Ch0D,Ch1D,Ch2D,Ch3D)
+# Then we use the FilterChannel function to filter the data using our parameters. 
+# The resulting index is the index of the objects we don't want. So we remove those indexes
+# from the channel data. 
+Index <- FilterChannel(channellist[[ChannelToCluster]],MaxAmp,MinLength,MaxLength)
+channellist[[ChannelToCluster]] <- as.data.frame(channellist[[ChannelToCluster]][-c(Index),])
+ModifiedData <- matrix(nrow= dim(channellist[[ChannelToCluster]])[1], ncol =50)
+
+
+
+
+for (z in 1:dim(channellist[[ChannelToCluster]])[1]) {
+  if (max(which(channellist[[ChannelToCluster]][z,]!=0)) < 50 ) { 
+    ModifiedData[z,] <- as.numeric(binning(channellist[[ChannelToCluster]][z,1:50],50))
+  } else {
+    NumberToFind <- channellist[[ChannelToCluster]][z,1]
+  lengthofvector <- dim(channellist[[ChannelToCluster]][z,])[2]
+  Index <- which.min(abs(channellist[[ChannelToCluster]][z,50:lengthofvector]-NumberToFind))
+  Index <- Index + 49
+  channellist[[ChannelToCluster]][z,(Index + 1):lengthofvector] <- 0  
+      ModifiedData[z,] <- as.numeric(binning(channellist[[ChannelToCluster]][z,1:(max(which(channellist[[ChannelToCluster]][z,]!=0)) + 1)],50))
+  }
+  
+  
+}
+RowNames <- rownames_to_column(channellist[[ChannelToCluster]],'ID')[,1]
+
+#ModifiedData <- StageList[[4]]
+ModData <- data.frame(ModifiedData,row.names = RowNames)
+#For normalizing the amplitude
+
+for (row in 1:dim(ModData)[1]) {
+  ModData[row,] <- rescale(as.numeric(ModData[row,]), to = c(0,1))
+}
+```
+
+
+```{r}
+#Getting the classes
+Mtx <- read.csv('/Users/khalifaalnaim/Desktop/WormSorter/AnnotatedIDs/GoodIDs1118Results.csv')
+FP <- length(which(Mtx[2,] == 'FP'))
+FN <- length(which(Mtx[2,] == 'FN'))
+TP <- length(which(Mtx[2,] == 'TP'))
+TN <- length(which(Mtx[2,] == 'TN'))
+print(paste('Accuracy is: ',100 * round((TP + TN)/(TP + TN + FN + FP),4),'%',sep=''))
+print(paste('Sensitivity is: ',100 * round((TP)/(TP + FN ),4),'%',sep=''))
+print(paste('Specificity is: ',100 * round((TN)/(TN + FP),4),'%',sep=''))
+print(paste('Percision is: ',100 * round((TP)/(TP + FP),4),'%',sep=''))
+#while the thingy here is "Accuracy is: 90.44%"
+# Creating new leveling 
+GoodWormIDs <- Mtx[1,which(Mtx[2,] == 'TP' | Mtx[2,] == 'FN')]
+GoodWormIDs <- as.character(GoodWormIDs)
+BadWormIDs <- Mtx[1,which(Mtx[2,] == 'FP' | Mtx[2,] == 'TN')]
+BadWormIDs <- as.character(BadWormIDs)
+WormIDs_1118 <- list()
+WormIDs_1118[[1]] <- GoodWormIDs
+WormIDs_1118[[2]] <- BadWormIDs
+```
+
+```{r}
+ModDataTest <- ModData
+for (x in 1:dim(ModDataTest)) {
+  if (rownames(ModDataTest)[x] %in% WormIDs_1118[[1]]) {
+    ModDataTest$Factor[x] <- 2
+  } else {
+    ModDataTest$Factor[x] <- 1
+  }
+}
+
+```
+
+
+```{r}
+### 1118 on itself 
+model1 <- ksvm(as.matrix(ModDataTest[,1:100]), as.factor(ModDataTest[,101]),type = 'C-svc', kernel= 'vanilladot',C=4,scaled=FALSE)
+model2 <- ksvm(as.matrix(ModDataTest[,1:100]), as.factor(ModDataTest[,101]),type = 'C-svc', kernel= 'laplacedot',C=4,scaled=FALSE)
+model3 <- ksvm(as.matrix(ModDataTest[,1:100]), as.factor(ModDataTest[,101]),type = 'C-svc', kernel= 'rbfdot',C=4,scaled=FALSE)
+model4 <- ksvm(as.matrix(ModDataTest[,1:100]), as.factor(ModDataTest[,101]),type = 'C-svc', kernel= 'polydot',C=4,scaled=FALSE)
+a1 = colSums(model1@xmatrix[[1]] * model1@coef[[1]]) 
+a2 = colSums(model2@xmatrix[[1]] * model2@coef[[1]]) 
+a3 = colSums(model3@xmatrix[[1]] * model3@coef[[1]])
+a4 = colSums(model4@xmatrix[[1]] * model4@coef[[1]])
+
+# calculate the constant a0 (-intercept of b in model) for each model
+a01 = -model1@b 
+a02 = -model2@b 
+a03 = -model3@b
+a04 = -model4@b
+
+# predict is a generic function for predictions from the results of various model fitting functions.
+pred1 <- predict(model1,ModDataTest[,1:100])
+pred2 <- predict(model2,ModDataTest[,1:100])
+pred3 <- predict(model3,ModDataTest[,1:100])
+pred4 <- predict(model4,ModDataTest[,1:100])
+sum(pred1 == ModDataTest[,101]) / nrow(ModDataTest)
+sum(pred2 == ModDataTest[,101]) / nrow(ModDataTest)
+sum(pred3 == ModDataTest[,101]) / nrow(ModDataTest)
+sum(pred4 == ModDataTest[,101]) / nrow(ModDataTest)
+```
+
+## 1117 on 1118 
+
+
+```{r}
+model2 <- ksvm(as.matrix(NewTrainingSet[,1:100]), as.factor(NewTrainingSet[,101]),type = 'C-svc', kernel= 'laplacedot',C=4,scaled=FALSE)
+pred2 <- predict(model2,ModDataTest[,1:100])
+sum(pred2 == ModDataTest[,101]) / nrow(ModDataTest)
+Positive <- rownames(ModData[which(pred2==2),])
+TP <- sum((Positive %in% WormIDs_1118[[1]]), na.rm = TRUE)
+Negative <- rownames(ModData[which(pred2==1),])
+TN <- sum(Negative %in% WormIDs_1118[[2]],na.rm = TRUE)# - sum((Negative %in% WormIDs[[1]]), na.rm = TRUE)
+(TP + TN) / (length(Positive) + length(Negative))
+# Accuracy after the filtering is  0.8921283 
+TP/length(Positive)
+```
+
+```{r}
+model2 <- ksvm(as.matrix(NewTrainingSet[,1:100]), as.factor(NewTrainingSet[,101]),type = 'C-svc', kernel= 'laplacedot',C=2,scaled=FALSE)
+pred2 <- predict(model2,ModDataTest3[,1:100])
+sum(pred2 == 2) / nrow(ModDataTest3)
+Positive <- rownames(ModDataTest3[which(pred2==2),])
+TP <- sum((Positive %in% WormIDs_1118[[1]]), na.rm = TRUE)
+Negative <- rownames(ModDataTest3[which(pred2==1),])
+TN <- sum(Negative %in% WormIDs_1118[[2]],na.rm = TRUE)# - sum((Negative %in% WormIDs[[1]]), na.rm = TRUE)
+(TP + TN) / (length(Positive) + length(Negative))
+# Accuracy after the filtering is  0.8921283 
+TP/length(Positive)
+```
+```{r}
+peak1 <- matrix(nrow=1,ncol=nrow(ModDataTest3))
+peak2 <- matrix(nrow=1,ncol=nrow(ModDataTest3))
+peak3 <- matrix(nrow=1,ncol=nrow(ModDataTest3))
+for (x in 1:nrow(ModDataTest3)) {
+  peak1[1,x] <- mean(as.numeric(ModDataTest3[x,1:33]))
+  peak2[1,x] <- mean(as.numeric(ModDataTest3[x,34:66]))
+  peak3[1,x] <- mean(as.numeric(ModDataTest3[x,67:100]))
+}
+```
+ mean(peak1)
+[1] 0.7420547
+> mean(peak2)
+[1] 0.8960304
+> mean(peak3)
+[1] 0.6049
+```{r}
+peak1 <- matrix(nrow=1,ncol=nrow(Modtesting))
+peak2 <- matrix(nrow=1,ncol=nrow(Modtesting))
+peak3 <- matrix(nrow=1,ncol=nrow(Modtesting))
+for (x in 1:nrow(Modtesting)) {
+  peak1[1,x] <- mean(as.numeric(Modtesting[x,1:33]))
+  peak2[1,x] <- mean(as.numeric(Modtesting[x,34:66]))
+  peak3[1,x] <- mean(as.numeric(Modtesting[x,67:100]))
+}
+```
+
+> mean(peak1)
+[1] 0.730274
+> mean(peak2)
+[1] 0.8722875
+> mean(peak3)
+[1] 0.6147735
+
+## 1117 + 1118 on 1110
+
+```{r}
+#Making a new set
+CombinedTSet <- rbind(NewTrainingSet, ModDataTest)
+```
+
+```{r}
+#On themselves first.. 
+model1 <- ksvm(as.matrix(CombinedTSet[,1:100]), as.factor(CombinedTSet[,101]),type = 'C-svc', kernel= 'vanilladot',C=4,scaled=FALSE)
+model2 <- ksvm(as.matrix(CombinedTSet[,1:100]), as.factor(CombinedTSet[,101]),type = 'C-svc', kernel= 'laplacedot',C=4,scaled=FALSE)
+model3 <- ksvm(as.matrix(CombinedTSet[,1:100]), as.factor(CombinedTSet[,101]),type = 'C-svc', kernel= 'rbfdot',C=4,scaled=FALSE)
+model4 <- ksvm(as.matrix(CombinedTSet[,1:100]), as.factor(CombinedTSet[,101]),type = 'C-svc', kernel= 'polydot',C=4,scaled=FALSE)
+a1 = colSums(model1@xmatrix[[1]] * model1@coef[[1]]) 
+a2 = colSums(model2@xmatrix[[1]] * model2@coef[[1]]) 
+a3 = colSums(model3@xmatrix[[1]] * model3@coef[[1]])
+a4 = colSums(model4@xmatrix[[1]] * model4@coef[[1]])
+
+# calculate the constant a0 (-intercept of b in model) for each model
+a01 = -model1@b 
+a02 = -model2@b 
+a03 = -model3@b
+a04 = -model4@b
+
+# predict is a generic function for predictions from the results of various model fitting functions.
+pred1 <- predict(model1,CombinedTSet[,1:100])
+pred2 <- predict(model2,CombinedTSet[,1:100])
+pred3 <- predict(model3,CombinedTSet[,1:100])
+pred4 <- predict(model4,CombinedTSet[,1:100])
+sum(pred1 == CombinedTSet[,101]) / nrow(CombinedTSet)
+sum(pred2 == CombinedTSet[,101]) / nrow(CombinedTSet)
+sum(pred3 == CombinedTSet[,101]) / nrow(CombinedTSet)
+sum(pred4 == CombinedTSet[,101]) / nrow(CombinedTSet)
+
+```
+
+## On 1110
+
+```{r}
+model2 <- ksvm(as.matrix(CombinedTSet[,1:100]), as.factor(CombinedTSet[,101]),type = 'C-svc', kernel= 'laplacedot',C=4,scaled=FALSE)
+pred2 <- predict(model2,ModDataTest2[,1:100])
+sum(pred2 == ModDataTest2[,101]) / nrow(ModDataTest2)
+Positive <- rownames(ModDataTest2[which(pred2==2),])
+TP <- sum((Positive %in% WormIDs_1110[[1]]), na.rm = TRUE)
+Negative <- rownames(ModDataTest2[which(pred2==1),])
+TN <- sum(Negative %in% WormIDs_1110[[2]],na.rm = TRUE)# - sum((Negative %in% WormIDs[[1]]), na.rm = TRUE)
+(TP + TN) / (length(Positive) + length(Negative))
+# Accuracy after the filtering is  0.8921283 
+TP/length(Positive)
+```
+
+## 1110 + 1117 on 1118? 
+
+#making the new set 
+```{r}
+#Making a new set
+CombinedTSet2 <- rbind(NewTrainingSet, ModDataTest2)
+```
+
+```{r}
+#On themselves first.. 
+model1 <- ksvm(as.matrix(CombinedTSet2[,1:100]), as.factor(CombinedTSet2[,101]),type = 'C-svc', kernel= 'vanilladot',C=4,scaled=FALSE)
+model2 <- ksvm(as.matrix(CombinedTSet2[,1:100]), as.factor(CombinedTSet2[,101]),type = 'C-svc', kernel= 'laplacedot',C=4,scaled=FALSE)
+model3 <- ksvm(as.matrix(CombinedTSet2[,1:100]), as.factor(CombinedTSet2[,101]),type = 'C-svc', kernel= 'rbfdot',C=4,scaled=FALSE)
+model4 <- ksvm(as.matrix(CombinedTSet2[,1:100]), as.factor(CombinedTSet2[,101]),type = 'C-svc', kernel= 'polydot',C=4,scaled=FALSE)
+a1 = colSums(model1@xmatrix[[1]] * model1@coef[[1]]) 
+a2 = colSums(model2@xmatrix[[1]] * model2@coef[[1]]) 
+a3 = colSums(model3@xmatrix[[1]] * model3@coef[[1]])
+a4 = colSums(model4@xmatrix[[1]] * model4@coef[[1]])
+
+# calculate the constant a0 (-intercept of b in model) for each model
+a01 = -model1@b 
+a02 = -model2@b 
+a03 = -model3@b
+a04 = -model4@b
+
+# predict is a generic function for predictions from the results of various model fitting functions.
+pred1 <- predict(model1,CombinedTSet2[,1:100])
+pred2 <- predict(model2,CombinedTSet2[,1:100])
+pred3 <- predict(model3,CombinedTSet2[,1:100])
+pred4 <- predict(model4,CombinedTSet2[,1:100])
+sum(pred1 == CombinedTSet2[,101]) / nrow(CombinedTSet2)
+sum(pred2 == CombinedTSet2[,101]) / nrow(CombinedTSet2)
+sum(pred3 == CombinedTSet2[,101]) / nrow(CombinedTSet2)
+sum(pred4 == CombinedTSet2[,101]) / nrow(CombinedTSet2)
+
+```
+
+
+```{r}
+model2 <- ksvm(as.matrix(CombinedTSet2[,1:100]), as.factor(CombinedTSet2[,101]),type = 'C-svc', kernel= 'laplacedot',C=4,scaled=FALSE)
+pred2 <- predict(model2,ModDataTest[,1:100])
+sum(pred2 == ModDataTest[,101]) / nrow(ModDataTest)
+Positive <- rownames(ModDataTest[which(pred2==2),])
+TP <- sum((Positive %in% WormIDs_1118[[1]]), na.rm = TRUE)
+Negative <- rownames(ModDataTest[which(pred2==1),])
+TN <- sum(Negative %in% WormIDs_1118[[2]],na.rm = TRUE)# - sum((Negative %in% WormIDs[[1]]), na.rm = TRUE)
+(TP + TN) / (length(Positive) + length(Negative))
+# Accuracy after the filtering is  0.8921283 
+TP/length(Positive)
+```
+
+
+
+## 1110.1C on 1117 
+
+```{r}
+model2 <- ksvm(as.matrix(ModDataTest2[,1:100]), as.factor(ModDataTest2[,101]),type = 'C-svc', kernel= 'laplacedot',C=4,scaled=FALSE)
+pred2 <- predict(model2,NewTrainingSet[,1:100])
+sum(pred2 == NewTrainingSet[,101]) / nrow(NewTrainingSet)
+Positive <- rownames(NewTrainingSet[which(pred2==2),])
+TP <- sum((Positive %in% WormIDs[[1]]), na.rm = TRUE)
+Negative <- rownames(NewTrainingSet[which(pred2==1),])
+TN <- sum(Negative %in% WormIDs[[2]],na.rm = TRUE)# - sum((Negative %in% WormIDs[[1]]), na.rm = TRUE)
+(TP + TN) / (length(Positive) + length(Negative))
+# Accuracy after the filtering is  0.8921283 
+TP/length(Positive)
+```
+
+
+## 1110.1c on 1118 
+
+```{r}
+Acc1 <- matrix(nrow=1,ncol=100)
+Acc2 <- matrix(nrow=1,ncol=100)
+Pre <- matrix(nrow=1,ncol=100)
+for (m in 1:100) {
+  model2 <- ksvm(as.matrix(ModDataTest2[,1:50]), as.factor(ModDataTest2[,51]),type = 'C-svc', kernel= 'laplacedot',C=4,scaled=FALSE)
+pred2 <- predict(model2,ModDataTest[,1:50])
+Acc1[m] <- sum(pred2 == ModDataTest[,51]) / nrow(ModDataTest)
+Positive <- rownames(ModDataTest[which(pred2==2),])
+TP <- sum((Positive %in% WormIDs_1118[[1]]), na.rm = TRUE)
+Negative <- rownames(ModDataTest[which(pred2==1),])
+TN <- sum(Negative %in% WormIDs_1118[[2]],na.rm = TRUE)# - sum((Negative %in% WormIDs[[1]]), na.rm = TRUE)
+Acc2[m] <-(TP + TN) / (length(Positive) + length(Negative))
+# Accuracy after the filtering is  0.8921283 
+Pre[m] <-TP/length(Positive)
+  
+}
+mean(Acc1)
+mean(Acc2)
+mean(Pre)
+```
+
+## Splitting 1110 to adults/L4 and L3and less 
+
+## Loading 1110.1C
+
+```{r}
+
+MaxAmp <- 35000
+MinLength <- 50
+MaxLength <- 1000
+ChannelToCluster <- 1
+# Which stage the pipeline will work on
+# 1 is for L1, 2 is for L2/3 
+Ch0D <- '/Users/khalifaalnaim/Desktop/COPASData/MOSTIGreen/1110.1C red 500 green 600 gain 2_ch0_prf.txt'
+Ch1D <- '/Users/khalifaalnaim/Desktop/COPASData/MOSTIGreen/1110.1C red 500 green 600 gain 2_ch1_prf.txt'
+Ch2D <- '/Users/khalifaalnaim/Desktop/COPASData/MOSTIGreen/1110.1C red 500 green 600 gain 2_ch2_prf.txt'
+Ch3D <- '/Users/khalifaalnaim/Desktop/COPASData/MOSTIGreen/1110.1C red 500 green 600 gain 2_ch3_prf.txt'
+channellist <- ReadChannel(Ch0D,Ch1D,Ch2D,Ch3D)
+# Then we use the FilterChannel function to filter the data using our parameters. 
+# The resulting index is the index of the objects we don't want. So we remove those indexes
+# from the channel data. 
+
+
+Index <- FilterChannel(channellist[[ChannelToCluster]],MaxAmp,MinLength,MaxLength)
+channellist[[ChannelToCluster]] <- as.data.frame(channellist[[ChannelToCluster]][-c(Index),])
+StageList <- AssignStage(channellist[[ChannelToCluster]])
+Youngs <- rbind(StageList[[1]],StageList[[2]])
+Bigs <- rbind(StageList[[3]],StageList[[4]])
+
+#Youngs
+channellist[[ChannelToCluster]] <- Youngs
+ModifiedData <- matrix(nrow= dim(channellist[[ChannelToCluster]])[1], ncol =100)
+for (z in 1:dim(channellist[[ChannelToCluster]])[1]) {
+  if (max(which(channellist[[ChannelToCluster]][z,]!=0)) < 100 ) { 
+    ModifiedData[z,] <- as.numeric(binning(channellist[[ChannelToCluster]][z,1:100],100))
+  } else { ModifiedData[z,] <- as.numeric(binning(channellist[[ChannelToCluster]][z,1:(max(which(channellist[[ChannelToCluster]][z,]!=0)) + 1)],100))
+  }
+  
+  
+}
+RowNames <- rownames_to_column(channellist[[ChannelToCluster]],'ID')[,1]
+
+#ModifiedData <- StageList[[4]]
+ModDataYoungs <- data.frame(ModifiedData,row.names = RowNames)
+#For normalizing the amplitude
+
+for (row in 1:dim(ModDataYoungs)[1]) {
+  ModDataYoungs[row,] <- rescale(as.numeric(ModDataYoungs[row,]), to = c(0,1))
+}
+
+
+#Bigs
+channellist[[ChannelToCluster]] <- Bigs
+ModifiedData <- matrix(nrow= dim(channellist[[ChannelToCluster]])[1], ncol =100)
+for (z in 1:dim(channellist[[ChannelToCluster]])[1]) {
+  if (max(which(channellist[[ChannelToCluster]][z,]!=0)) < 100 ) { 
+    ModifiedData[z,] <- as.numeric(binning(channellist[[ChannelToCluster]][z,1:100],100))
+  } else { ModifiedData[z,] <- as.numeric(binning(channellist[[ChannelToCluster]][z,1:(max(which(channellist[[ChannelToCluster]][z,]!=0)) + 1)],100))
+  }
+  
+  
+}
+RowNames <- rownames_to_column(channellist[[ChannelToCluster]],'ID')[,1]
+
+#ModifiedData <- StageList[[4]]
+ModDataBigs <- data.frame(ModifiedData,row.names = RowNames)
+#For normalizing the amplitude
+
+for (row in 1:dim(ModDataBigs)[1]) {
+  ModDataBigs[row,] <- rescale(as.numeric(ModDataBigs[row,]), to = c(0,1))
+}
+```
+
+
+```{r}
+#Getting the classes
+WormIDD <- '/Users/khalifaalnaim/Desktop/1110.1CIDs.csv'
+WormIDs_Youngs <- CreateTrainingSetIDs(ModDataYoungs, WormIDD)
+WormIDs_Bigs <- CreateTrainingSetIDs(ModDataBigs, WormIDD)
+#ModData2 <- ModData2[1:262,]
+
+```
+
+```{r}
+ModDataTestBigs <- ModDataBigs
+for (x in 1:dim(ModDataTestBigs)) {
+  if (rownames(ModDataTestBigs)[x] %in% WormIDs_Bigs[[1]]) {
+    ModDataTestBigs$Factor[x] <- 2
+  } else {
+    ModDataTestBigs$Factor[x] <- 1
+  }
+}
+
+```
+
+```{r}
+ModDataTestYoungs <- ModDataYoungs
+for (x in 1:dim(ModDataTestYoungs)[1]) {
+  if (rownames(ModDataTestYoungs)[x] %in% WormIDs_Youngs[[1]]) {
+    ModDataTestYoungs$Factor[x] <- 2
+  } else {
+    ModDataTestYoungs$Factor[x] <- 1
+  }
+}
+
+```
+
+## 1117 on bigs 
+
+```{r}
+Acc1 <- matrix(nrow=1,ncol=100)
+Acc2 <- matrix(nrow=1,ncol=100)
+Pre <- matrix(nrow=1,ncol=100)
+for (m in 1:100) {
+  model2 <- ksvm(as.matrix(NewTrainingSet[,1:100]), as.factor(NewTrainingSet[,101]),type = 'C-svc', kernel= 'laplacedot',C=4,scaled=FALSE)
+pred2 <- predict(model2,ModDataTestBigs[,1:100])
+Acc1[m] <- sum(pred2 == ModDataTestBigs[,101]) / nrow(ModDataTestBigs)
+Positive <- rownames(ModDataTestBigs[which(pred2==2),])
+TP <- sum((Positive %in% WormIDs_Bigs[[1]]), na.rm = TRUE)
+Negative <- rownames(ModDataTestBigs[which(pred2==1),])
+TN <- sum(Negative %in% WormIDs_Bigs[[2]],na.rm = TRUE)# - sum((Negative %in% WormIDs[[1]]), na.rm = TRUE)
+Acc2[m] <-(TP + TN) / (length(Positive) + length(Negative))
+# Accuracy after the filtering is  0.8921283 
+Pre[m] <-TP/length(Positive)
+  
+}
+mean(Acc1)
+mean(Acc2)
+mean(Pre)
+```
+
+
+```{r}
+Acc1 <- matrix(nrow=1,ncol=100)
+Acc2 <- matrix(nrow=1,ncol=100)
+Pre <- matrix(nrow=1,ncol=100)
+for (m in 1:100) {
+  model2 <- ksvm(as.matrix(NewTrainingSet[,1:100]), as.factor(NewTrainingSet[,101]),type = 'C-svc', kernel= 'laplacedot',C=4,scaled=FALSE)
+pred2 <- predict(model2,ModDataTestYoungs[,1:100])
+Acc1[m] <- sum(pred2 == ModDataTestYoungs[,101]) / nrow(ModDataTestYoungs)
+Positive <- rownames(ModDataTestYoungs[which(pred2==2),])
+TP <- sum((Positive %in% WormIDs_Youngs[[1]]), na.rm = TRUE)
+Negative <- rownames(ModDataTestYoungs[which(pred2==1),])
+TN <- sum(Negative %in% WormIDs_Youngs[[2]],na.rm = TRUE)# - sum((Negative %in% WormIDs[[1]]), na.rm = TRUE)
+Acc2[m] <-(TP + TN) / (length(Positive) + length(Negative))
+# Accuracy after the filtering is  0.8921283 
+Pre[m] <-TP/length(Positive)
+  
+}
+mean(Acc1)
+mean(Acc2)
+mean(Pre)
+```
+
+```{r}
+Ch0D <- '/Users/khalifaalnaim/Desktop/WormSorter/git/WormSorter/SoniaFiles/SAHCH0.txt'
+Ch1D <- '/Users/khalifaalnaim/Desktop/WormSorter/git/WormSorter/SoniaFiles/SAHCH1.txt'
+Ch2D <- '/Users/khalifaalnaim/Desktop/WormSorter/git/WormSorter/SoniaFiles/SAHCH2.txt'
+Ch3D <- '/Users/khalifaalnaim/Desktop/WormSorter/git/WormSorter/SoniaFiles/SAHCH3.txt'
+  channellist <- list()
+  channellist <- ReadChannel(Ch0D,Ch1D,Ch2D,Ch3D)
+ 
+    Index <- FilterChannel(channellist[[1]],MaxAmp,MinLength,MaxLength)
+    channellist[[1]] <- as.data.frame(channellist[[1]][-c(Index),])
+    ModifiedData <- matrix(nrow= dim(channellist[[1]])[1], ncol =100)
+    for (z in 1:dim(channellist[[x]])[1]) {
+      if (max(which(channellist[[x]][z,]!=0)) < 100 ) { 
+        ModifiedData[z,] <- as.numeric(binning(channellist[[x]][z,1:100],100))
+      } else { ModifiedData[z,] <- as.numeric(binning(channellist[[x]][z,1:(max(which(channellist[[x]][z,]!=0)) + 1)],100))
+      }
+    }
+    RowNames <- rownames_to_column(channellist[[x]],'ID')[,1]
+    ModData[[x]] <- data.frame(ModifiedData,row.names = RowNames)
+    
+    
+    
+```
+
+
+
+
+
+
+
+### Finding the orientation of the worm 
+
+```{r}
+#Loading SAH's data 
+Ch0D <- '/Users/khalifaalnaim/Desktop/SAHCH0_smaller.txt'
+Ch1D <- '/Users/khalifaalnaim/Desktop/SAHCH1_smaller.txt'
+Ch2D <- '/Users/khalifaalnaim/Desktop/SAHCH2_smaller.txt'
+Ch3D <- '/Users/khalifaalnaim/Desktop/SAHCH3_smaller.txt'
+  channellist <- list()
+  channellist <- ReadChannel(Ch0D,Ch1D,Ch2D,Ch3D)
+ 
+    Index <- FilterChannel(channellist[[1]],MaxAmp,MinLength,MaxLength)
+    channellist[[1]] <- as.data.frame(channellist[[1]][-c(Index),])
+    ModifiedData <- matrix(nrow= dim(channellist[[1]])[1], ncol =100)
+    for (z in 1:dim(channellist[[1]])[1]) {
+      if (max(which(channellist[[1]][z,]!=0)) < 100 ) { 
+        ModifiedData[z,] <- as.numeric(binning(channellist[[1]][z,1:100],100))
+      } else { ModifiedData[z,] <- as.numeric(binning(channellist[[1]][z,1:(max(which(channellist[[1]][z,]!=0)) + 1)],100))
+      }
+    }
+    RowNames <- rownames_to_column(channellist[[1]],'ID')[,1]
+    ModData <- data.frame(ModifiedData,row.names = RowNames)
+
+for (row in 1:dim(ModData)[1]) {
+  ModData[row,] <- rescale(as.numeric(ModData[row,]), to = c(0,1))
+}
+```
+
+#making the levels for orientation .. 
+
+```{r}
+ModDataTest <- ModData
+count <- 1
+for (row in rownames(ModDataTest)) {
+
+ LofCh2 <- max(which(channellist[[2]][row,]!=0))
+ HalfL <- floor(LofCh2/2)
+ Peak1 <- max(channellist[[2]][row,1:HalfL])
+ Peak2 <- max(channellist[[2]][row,HalfL:LofCh2])
+ if (Peak1 < 1000 & Peak2 < 1000) {
+    ModDataTest$Factor[count] <- 0
+ } else if (Peak1 > Peak2) {
+    # head is in the right side
+    ModDataTest$Factor[count] <- 2
+  } else {
+    # head is in the left side 
+    ModDataTest$Factor[count] <- 1
+  }
+ count <- count + 1
+}
+
+```
+
+```{r}
+#removing worms with no fluorescence lol
+ModDataTest <- ModDataTest[-which(ModDataTest$Factor == 0),]
+```
+
+
+```{r}
+#making training and prediction set
+RandomSample <- sample(dim(ModDataTest)[1],500)
+TrainingSet <- ModDataTest[-RandomSample,]
+PredSet <- ModDataTest[RandomSample,]
+```
+
+
+```{r}
+#On themselves first.. 
+model1 <- ksvm(as.matrix(TrainingSet[,1:100]), as.factor(TrainingSet[,101]),type = 'C-svc', kernel= 'vanilladot',C=4,scaled=FALSE)
+model2 <- ksvm(as.matrix(TrainingSet[,1:100]), as.factor(TrainingSet[,101]),type = 'C-svc', kernel= 'laplacedot',C=4,scaled=FALSE)
+model3 <- ksvm(as.matrix(TrainingSet[,1:100]), as.factor(TrainingSet[,101]),type = 'C-svc', kernel= 'rbfdot',C=4,scaled=FALSE)
+model4 <- ksvm(as.matrix(TrainingSet[,1:100]), as.factor(TrainingSet[,101]),type = 'C-svc', kernel= 'polydot',C=4,scaled=FALSE)
+a1 = colSums(model1@xmatrix[[1]] * model1@coef[[1]]) 
+a2 = colSums(model2@xmatrix[[1]] * model2@coef[[1]]) 
+a3 = colSums(model3@xmatrix[[1]] * model3@coef[[1]])
+a4 = colSums(model4@xmatrix[[1]] * model4@coef[[1]])
+
+# calculate the constant a0 (-intercept of b in model) for each model
+a01 = -model1@b 
+a02 = -model2@b 
+a03 = -model3@b
+a04 = -model4@b
+
+# predict is a generic function for predictions from the results of various model fitting functions.
+pred1 <- predict(model1,TrainingSet[,1:100])
+pred2 <- predict(model2,TrainingSet[,1:100])
+pred3 <- predict(model3,TrainingSet[,1:100])
+pred4 <- predict(model4,TrainingSet[,1:100])
+sum(pred1 == TrainingSet[,101]) / nrow(TrainingSet)
+sum(pred2 == TrainingSet[,101]) / nrow(TrainingSet)
+sum(pred3 == TrainingSet[,101]) / nrow(TrainingSet)
+sum(pred4 == TrainingSet[,101]) / nrow(TrainingSet)
+
+```
+
+
+```{r}
+
+ Acc1 <- matrix(nrow=1,ncol=100)
+Acc2 <- matrix(nrow=1,ncol=100)
+Pre <- matrix(nrow=1,ncol=100)
+for (m in 1:100) {
+ model2 <- ksvm(as.matrix(TrainingSet[,1:100]), as.factor(TrainingSet[,101]),type = 'C-svc', kernel= 'laplacedot',C=4,scaled=FALSE)
+pred2 <- predict(model2,PredSet[,1:100])
+Acc1[m] <-sum(pred2 == PredSet[,101]) / nrow(PredSet)
+}
+mean(Acc1)
+
+```
+
+```{r}
+model2 <- ksvm(as.matrix(TrainingSet[,1:100]), as.factor(TrainingSet[,101]),type = 'C-svc', kernel= 'laplacedot',C=4,scaled=FALSE,cross = 10)
+pred2 <- predict(model2,PredSet[,1:100])
+sum(pred2 == PredSet[,101]) / nrow(PredSet)
+```
+
+
+# trying to tune parameters
+
+```{r}
+lrn = makeLearner("classif.ksvm",par.vals = list(C = 3, type = "kbb-svc" , kernel = "laplacedot"))
+num_ps <- makeParamSet(makeNumericParam("sigma", lower=-6,upper=6, trafo = function(x) 10^x))
+```
+
+```{r}
+ctrl <- makeTuneControlGrid()
+rdesc <- makeResampleDesc("CV", iters = 3L)
+res <- tuneParams(lrn, task = as.data.frame(NewTrainingSet[,1:100]), resampling = rdesc, par.set = num_ps, control = ctrl)
+```
+
+```{r}
+#dtw kernel test
+model2 <- ksvm(as.matrix(NewTrainingSet[,1:100]), as.factor(NewTrainingSet[,101]),type = 'C-svc', kernel= kernel2,scaled=FALSE)
+
+```
+
+```{r}
+testing <- tsclust(NewTrainingSet[,1:100], type = 'partitional', k = 2L, distance = 'dtw_basic', centroid = 'shape',trace = TRUE, args = tsclust_args(dist = list(window.size = 2L)))
+```
+
+
+```{r}
+testing2 <- tsclust(NewTrainingSet[,1:100], k = 2L, distance = 'gak', args = tsclust_args(dist = list(sigma = 1)))
+```
+```{r}
+k1 <- function(x) {
+  for(z in 1:nrow=x) 
+    for (m in 1:ncol=x){
+    matrix[z,m] <- dtw(x[m,],x[z,]) 
+    }
+  }
+}
+```
+
+
+
+# Testing models for males vs hermaphrodites 
+
+```{r}
+#Channel directory taken from the WormSorter github
+#When using your own data simply change these links to the file directory of the channels. 
+Ch0D <- "/Users/khalifaalnaim/Desktop/WormSorter/OldSAHData/SAHCH0.txt"
+Ch1D <- "/Users/khalifaalnaim/Desktop/WormSorter/OldSAHData/SAHCH1.txt"
+Ch2D <- "/Users/khalifaalnaim/Desktop/WormSorter/OldSAHData/SAHCH2.txt"
+Ch3D <- "/Users/khalifaalnaim/Desktop/WormSorter/OldSAHData/SAHCH3.txt"
+#CSV file containing the levels (or annotation) for each worm in our training set. 
+GoodIDD <- "/Users/khalifaalnaim/Desktop/WormSorter/OldSAHData/GoodIDsSAH.csv"
+```
+
+```{r}
+Ch0D <- '/Users/khalifaalnaim/Desktop/WormSorter/COPASData/MOSTIGreen/1110.1C red 500 green 600 gain 2_ch0_prf.txt'
+Ch1D <- '/Users/khalifaalnaim/Desktop/WormSorter/COPASData/MOSTIGreen/1110.1C red 500 green 600 gain 2_ch1_prf.txt'
+Ch2D <- '/Users/khalifaalnaim/Desktop/WormSorter/COPASData/MOSTIGreen/1110.1C red 500 green 600 gain 2_ch2_prf.txt'
+Ch3D <- '/Users/khalifaalnaim/Desktop/WormSorter/COPASData/MOSTIGreen/1110.1C red 500 green 600 gain 2_ch3_prf.txt'
+```
+
+```{r}
+
+Ch0D <- '/Users/khalifaalnaim/Desktop/WormSorter/COPASData/MOSTIGreen/1117.1C_Ch0.txt'
+Ch1D <- '/Users/khalifaalnaim/Desktop/WormSorter/COPASData/MOSTIGreen/1117.1C_Ch1.txt'
+Ch2D <- '/Users/khalifaalnaim/Desktop/WormSorter/COPASData/MOSTIGreen/1117.1C_Ch2.txt'
+Ch3D <- '/Users/khalifaalnaim/Desktop/WormSorter/COPASData/MOSTIGreen/1117.1C_Ch3.txt'
+```
+
+
+```{r, warning=FALSE, message=FALSE}
+#Setting up the parameters we need for the analysis
+# Max amplitude an object can have 
+# Anything more will be filitered out
+MaxAmp <- 40000
+# Minimum and maximum time of flight for each object
+MinLength <- 51
+MaxLength <- 900
+# Which channel the pipeline will work on 
+# 1 is for Channel 0, 2 is for Channel 1 
+# 3 is for Channel 2, 4 is for Channel 3
+ChannelToCluster <- 1
+# Which stage the pipeline will work on
+# 1 is for L1, 2 is for L2/3 
+# 3 is for L4, 4 is for Adults
+Stage <- 1
+
+# The ReadChannel function simply takes in the channel directories and returns a list with all
+# the channels data.
+channellist <- ReadChannel(Ch0D,Ch1D,Ch2D,Ch3D)
+# Then we use the FilterChannel function to filter the data using our parameters. 
+# The resulting index is the index of the objects we don't want. So we remove those indexes
+# from the channel data. 
+Index <- FilterChannel(channellist[[ChannelToCluster]][1:dim(channellist[[ChannelToCluster]])[1]-1,],MaxAmp,MinLength,MaxLength)
+channellist[[ChannelToCluster]] <- as.data.frame(channellist[[ChannelToCluster]][-c(Index),])
+# The AssignStage function will take in the channel data and sorts the worms into four
+# stages (L1, L2/3, L4, Adult). 
+#StageList <- AssignStage(channellist[[ChannelToCluster]])
+#Binning the TOF values to change it to 0 100
+UnModData <- channellist[[ChannelToCluster]] 
+ModifiedData <- matrix(nrow= dim(channellist[[ChannelToCluster]])[1], ncol =100)
+#for (z in 1:dim(channellist[[ChannelToCluster]])[1]) {
+#  if (max(which(channellist[[ChannelToCluster]][z,]!=0)) < 100 ) { 
+#    ModifiedData[z,] <- as.numeric(binning(channellist[[ChannelToCluster]][z,1:100],100))
+#  } else { ModifiedData[z,] <- as.numeric(binning(channellist[[ChannelToCluster]][z,1:(max(which(channellist[[ChannelToCluster#]][z,]!=0)) + 1)],100))
+#      }
+  
+
+#}
+RowNames <- rownames_to_column(channellist[[ChannelToCluster]],'ID')[,1]
+
+#ModifiedData <- channellist[[ChannelToCluster]]
+#ModData <- data.frame(UnModData,row.names = RowNames)
+ModData2 <- data.frame(UnModData,row.names = RowNames)
+
+#For normalizing the amplitude
+
+#for (row in 1:dim(ModData2)[1]) {
+ #ModData[row,] <- rescale(as.numeric(ModData[row,]), to = c(0,1))
+ #ModData[row,] <- scale(as.numeric(ModData[row,]))
+ #ModData2[row,] <- scale(as.numeric(ModData2[row,]))
+#}
+
+
+```
+
+# trimming the zeros 
+
+```{r}
+library(jmotif)
+ModData3 <- UnModData[,1:50]
+for (row in 1:(dim(UnModData)[1]-1)){
+  ModData3[row,] <- paa(as.numeric(UnModData[row,1:((which(as.numeric(UnModData[row,]) == 0)[1] -1))]),50)
+  #NALength <- (length(UnModData[row,]) - length(as.numeric(UnModData[row,1:((which(as.numeric(UnModData[row,]) == 0)[1] -1))])))
+#ModData3[row,] <- c(as.numeric(UnModData[row,1:((which(as.numeric(UnModData[row,]) == 0)[1] -1))]),rep(NA,NALength))
+  }
+```
+
+```{r}
+
+for (row in 1:dim(ModData3)[1]) {
+ #ModData[row,] <- rescale(as.numeric(ModData[row,]), to = c(0,1))
+ ModData3[row,] <- scale(as.numeric(ModData3[row,]))
+
+}
+
+```
+
+
+```{r, warning=FALSE}
+ModData2 <- UnModData[,1:50]
+ModData2 <- ModData2[1:dim(ModData2)[1]-1,]
+for (row in 1:dim(ModData2)[1]) {
+ ModData2[row,] <- as.numeric(binning(UnModData[row,1:(which(as.numeric(UnModData[row,]) == 0)[1] -1)]))
+   
+}
+```
+
+```{r}
+
+for (row in 1:dim(ModData2)[1]) {
+ ModData2[row,] <- scale(as.numeric(ModData2[row,]))
+}
+
+```
+
+# ids for 1118 
+
+```{r}
+
+Mtx <- read.csv('/Users/khalifaalnaim/Desktop/WormSorter/AnnotatedIDs/GoodIDs1118Results.csv')
+FP <- length(which(Mtx[2,] == 'FP'))
+FN <- length(which(Mtx[2,] == 'FN'))
+TP <- length(which(Mtx[2,] == 'TP'))
+TN <- length(which(Mtx[2,] == 'TN'))
+print(paste('Accuracy is: ',100 * round((TP + TN)/(TP + TN + FN + FP),4),'%',sep=''))
+print(paste('Sensitivity is: ',100 * round((TP)/(TP + FN ),4),'%',sep=''))
+print(paste('Specificity is: ',100 * round((TN)/(TN + FP),4),'%',sep=''))
+print(paste('Percision is: ',100 * round((TP)/(TP + FP),4),'%',sep=''))
+#while the thingy here is "Accuracy is: 90.44%"
+# Creating new leveling 
+GoodWormIDs <- Mtx[1,which(Mtx[2,] == 'TP' | Mtx[2,] == 'FN')]
+GoodWormIDs <- as.character(GoodWormIDs)
+BadWormIDs <- Mtx[1,which(Mtx[2,] == 'FP' | Mtx[2,] == 'TN')]
+BadWormIDs <- as.character(BadWormIDs)
+WormIDs[[1]] <- GoodWormIDs
+WormIDs[[2]] <- BadWormIDs
+```
+
+#split set 
+```{r}
+Listhe <- RandomTrainingSet(ModData3, WormIDs, 1,1)
+TSet <- Listhe[[1]]
+PSet <- Listhe[[2]]
+```
+
+```{r}
+Listhe <- RandomTrainingSet(ModData2, WormIDs, 1,1)
+TSet <- Listhe[[1]]
+PSet <- Listhe[[2]]
+```
+
+
+```{r}
+
+WormIDD <- '/Users/khalifaalnaim/Desktop/WormSorter/AnnotatedIDs/1110.1CIDs.csv'
+
+WormIDs <- CreateTrainingSetIDs(as.data.frame(UnModData),WormIDD)
+```
+
+
+# testing already existing model
+
+
+```{r}
+
+pred1 <- predict(NewModel,PSet)
+#sum(pred1 == ModDataTest2[,51]) / nrow(ModDataTest2)
+Positive <- rownames(PSet[which(pred1==2),])
+TP <- sum((Positive %in% WormIDs[[1]]), na.rm = TRUE)
+Negative <- rownames(PSet[which(pred1==1),])
+TN <- sum(Negative %in% WormIDs[[2]],na.rm = TRUE)# - sum((Negative %in% WormIDs[[1]]), na.rm = TRUE)
+ (TP + TN) / (length(Positive) + length(Negative))
+# Accuracy after the filtering is  0.8921283 
+TP/length(Positive)
+```
+
+
+
+```{r}
+model1 <- ksvm(as.matrix(TSet[,1:50]), as.factor(TSet[,51]),type = 'C-svc', kernel= "laplacedot",C=3,kpar = list(sigma = 1),scaled=FALSE, cross = 5)
+a1 = colSums(model1@xmatrix[[1]] * model1@coef[[1]]) 
+
+# calculate the constant a0 (-intercept of b in model) for each model
+a01 = -model1@b 
+
+# predict is a generic function for predictions from the results of various model fitting functions.
+pred1 <- predict(model1,PSet)
+#sum(pred1 == ModDataTest2[,51]) / nrow(ModDataTest2)
+Positive <- rownames(PSet[which(pred1==2),])
+TP <- sum((Positive %in% WormIDs[[1]]), na.rm = TRUE)
+Negative <- rownames(PSet[which(pred1==1),])
+TN <- sum(Negative %in% WormIDs[[2]],na.rm = TRUE)# - sum((Negative %in% WormIDs[[1]]), na.rm = TRUE)
+ (TP + TN) / (length(Positive) + length(Negative))
+# Accuracy after the filtering is  0.8921283 
+TP/length(Positive)
+```
+
+# Annotation rn 
+I think I been doing it based on shape
+but some information can be taken from length vs extintion as well, perhaps binning is not the best idea? 
+perhaps its a better idea to group L1/L2, L3/4, and Adults as individual groups, while still paa'ing the time of flight
+then find a normalization method that takes in total mean of extintion of all worms? or perhaps even not even doing scaling at all
+
+* Annotate two groups with that criteria (worms less than 200 tof with ext higher than 25k are not worms)
+
+## Notes on this
+The thing works good so far! we reached 98.5 precision which is great! 
+Let's try it but instead of using the function paa 
+lets try with simply binning instead just like we did before 
+the z score norm looks good so far overall 
+then lets make a new annotaed set to see effect on multiple data sets and if combining them works best or not
+we also should figure out the new tuning parameters after 
+
+* PAA works better initially than binning so
+
+# Z score norm, 500, 500 tset remaining is pset (with paa instead of binning)
+[1] 0.895
+[1] 0.9856115 -> precision 
+
+
+# With linear scaling 
+# 1110 
+[1] 0.9991843
+# With trimming and z score scaling
+1 
+
+
+
+# All 1110, paa and z score scaling on 1117 with paa and z score scaling
+[1] 0.9293564
+[1] 0.9803371 -> precision 
+
+## Next step 
+make lists that dont have "not certain" 
+
+```{r}
+ksvm_task = makeClassifTask(data = NewTrainingSet, target = "Factor")
+discrete_ps = makeParamSet(
+    makeDiscreteParam("C", values = c(1:10)),
+    makeDiscreteParam("sigma", values = c(1:10))
+)
+print(discrete_ps)
+
+ctrl = makeTuneControlGrid()
+rdesc = makeResampleDesc("CV", iters = 3L)
+
+#res = tuneParams("classif.ksvm", ksvm_task , rdesc, par.set = discrete_ps, control = ctrl)
+# CHANGE: Use accuracy as measure instead of MSE, more appropriate for classification
+res = tuneParams("classif.ksvm", ksvm_task , rdesc, measures=acc, par.set = discrete_ps, control = ctrl)
+print(res)
+```
+
+
+> print(res)
+Tune result:
+Op. pars: C=0.5; sigma=0.5
+acc.test.mean=0.9049110
+
+
+```{r}
+ModDataTest2 <- ModData3
+for (x in 1:dim(ModDataTest2)) {
+  if (rownames(ModDataTest2)[x] %in% WormIDs[[1]]) {
+    ModDataTest2$Factor[x] <- 2
+  } else {
+    ModDataTest2$Factor[x] <- 1
+  }
+}
+
+```
+
+
+# 1117 on 1110.1c 
+
+```{r}
+
+pred1 <- predict(model1,ModDataTest2[,1:100])
+pred2 <- predict(model2,ModDataTest2[,1:100])
+pred3 <- predict(model3,ModDataTest2[,1:100])
+pred4 <- predict(model4,ModDataTest2[,1:100])
+sum(pred1 == ModDataTest2[,101]) / nrow(ModDataTest2)
+sum(pred2 == ModDataTest2[,101]) / nrow(ModDataTest2)
+sum(pred3 == ModDataTest2[,101]) / nrow(ModDataTest2)
+sum(pred4 == ModDataTest2[,101]) / nrow(ModDataTest2)
+```
+
+```{r}
+Accuracy <- matrix(nrow=1,ncol=100)
+Per <- matrix(nrow=1,ncol=100)
+for (z in 1:100) {
+  model2 <- ksvm(as.matrix(NewTrainingSet[,1:100]), as.factor(NewTrainingSet[,101]),type = 'C-svc', kernel= 'laplacedot',C=3,kpar = list(sigma = 1),scaled=FALSE, cross = 5)
+pred2 <- predict(model2,ModDataTest2[,1:100])
+Positive <- rownames(ModDataTest2[which(pred2==2),])
+TP <- sum((Positive %in% WormIDs[[1]]), na.rm = TRUE)
+Negative <- rownames(ModDataTest2[which(pred2==1),])
+TN <- sum(Negative %in% WormIDs[[2]],na.rm = TRUE)# - sum((Negative %in% WormIDs[[1]]), na.rm = TRUE)
+Accuracy[1,z] <- (TP + TN) / (length(Positive) + length(Negative))
+# Accuracy after the filtering is  0.8921283 
+Per[1,z] <- TP/length(Positive)
+}
+mean(Accuracy)
+mean(Per)
+
+```
+
+
+```{r}
+#Mixing 1110 + 1117
+```
+
+
+
+# Best params: 1117 on 1110 
+> mean(Accuracy)
+[1] 0.9127243
+> mean(Per)
+[1] 0.9677419
+# Best params: 1117 on 1123
+
+
+#Best params: 1110 on 1123 
+
+
+#Best params: 1110 + 1117 on 1123 
+
+
+
+
+
+
+
+#Testing males vs hermaphrodites
+* Check average time of flight for males (check online as well (when adults can be distinguished aka what stage))
+* check average optical density for males and hermaphrodites that are in the same time of flight range 
+* see if i'm able to distinguish them without even using a model 
+* check if i can distinguish them with a model 
+
+
+```{r}
+TSet <- ChExt[as.character(WormIDs[[1]]),]
+```
+
+```{r}
+#finding average length and max ext 
+Length <- matrix(nrow=273,ncol=1)
+Peak <- matrix(nrow=273,ncol=1)
+MeanExt <- matrix(nrow=273,ncol=1)
+integral <- matrix(nrow=273,ncol=2)
+
+for (row in 1:length(rownames(TSet))){
+  Length[row] <- which(TSet[row,] == 0)[1] - 1
+  Peak[row] <- max(TSet[row,])
+  MeanExt[row] <- mean(TSet[row,])
+   integral[row,1] <- trapz(TSet[row,])
+  integral[row,2] <- Length[row]
+}
+```
+
+#for males
+mean length <- 443.2
+min length <- 189
+max length <- 724
+mean peak <- 28175.64
+min peak <- 19393
+max peak <- 34936
+mean MeanExt <- 8550.231
+min MeanExt <- 4062.863
+max MeanExt <- 16748.94
+
+#males
+> mean(log(Peak))
+[1] 10.23962
+> mean(log(MeanExt))
+[1] 9.030652
+#herma
+mean(log(Peak[which(Length >= 150)]))
+[1] 9.775669
+> mean(log(MeanExt[which(Length >= 150)]))
+[1] 8.545086
+
+
+# for males between 200 to 400 tof 
+mean(Length[which(Length >= 200 & Length <= 400)])
+[1] 363.9688
+mean(Peak[which(Length >= 200 & Length <= 400)])
+[1] 27016.22
+mean(MeanExt[which(Length >= 200 & Length <= 400)])
+[1] 6724.641
+mean(integral[which(Length >= 200 & Length <= 400),1])
+[1] 7434672
+# herma between 200 to 400 tof
+mean(Length[which(Length >= 200 & Length <= 400)])
+[1] 268.5444
+mean(Peak[which(Length >= 200 & Length <= 400)])
+[1] 22241.79
+mean(MeanExt[which(Length >= 200 & Length <= 400)])
+[1] 8913.829
+mean(integral[which(Length >= 200 & Length <= 400),1])
+[1] 4712704
+# for hermaphrodites (with length 150 and more)
+mean length <- 238.6912
+min length <- 150
+max length <- 644
+mean peak <- 17672.84
+min peak <- 10430
+max peak <- 65535
+mean MeanExt <- 5620.231
+min MeanExt <- 1900.449
+max MeanExt <- 35839.6
+```{r}
+TSet2 <- channellist[[1]][as.character(WormIDs[[1]]),]
+```
+
+```{r}
+#finding average length and max ext 
+Length <- matrix(nrow=657,ncol=1)
+Peak <- matrix(nrow=657,ncol=1)
+MeanExt <- matrix(nrow=657,ncol=1)
+integral <- matrix(nrow=657,ncol=2)
+for (row in 1:length(rownames(TSet2))){
+  if (is.na(which(TSet2[row,] == 0)[1]) ) {
+    Length[row] <- length(TSet2[row,])
+  } else {
+      Length[row] <- which(TSet2[row,] == 0)[1] - 1
+  }
+  Peak[row] <- max(TSet2[row,])
+  MeanExt[row] <- mean(TSet2[row,])
+  integral[row,1] <- trapz(TSet2[row,])
+  integral[row,2] <- Length[row]
+}
+```
+
+mean(integral[,1])
+[1] 1956029
+#males
+mean(integral[,1])
+[1] 9453796
+
+# SAH Male data has more optical density than hermaphrodites in 1110.1c which is weird and 1117.1c 
+
+
+
+```{r}
+ChExt <- t(ChExt)
+Ch1 <- t(Ch1)
+Ch2 <- t(Ch2)
+Ch3 <- t(Ch3)
+```
+
+
+```{r}
+ID <- 'X1'
+    WormProfile = ReadProfile(ID,ChExt,Ch1,Ch2,Ch3)
+
+ cols=unique(as.character(WormProfile$variable))
+      cols=tolower(cols)
+      if("ext" %in% cols){cols[which(cols=="ext")]="black"}
+      ##change plot settings to make it faster
+     
+      ggplot(WormProfile, aes(x=Length, y=Amplitude, group=variable,color=variable)) + geom_line()+ scale_colour_manual(values = cols) + labs(color='Channel') + ggtitle(paste('Lucky worm #',ID,sep=''))
+ 
+```
+
+
+```{r}
+#testing sd method
+UnModData <- StageList[[1]]
+PeakSide1 <- matrix(nrow=1202,ncol=1)
+PeakSide2<- matrix(nrow=1202,ncol=1)
+PeakSide3 <- matrix(nrow=1202,ncol=1)
+for (x in 1:dim(UnModData)[1]) {
+  ModData3 <- as.numeric(UnModData[x,1:((which(as.numeric(UnModData[x,]) == 0)[1] -1))])
+   FirstCutOff <- round(length(ModData3) * 0.3)
+ SecondCutOff <- round(length(ModData3) * 0.7)
+  PeakSide1[x] <- max(ModData3[1:FirstCutOff])
+  PeakSide2[x] <- max(ModData3[(FirstCutOff+1):(SecondCutOff-1)])
+   PeakSide3[x] <- max(ModData3[SecondCutOff:length(ModData3)])
+}
+SDPeak1 <- sd(as.numeric(PeakSide1), na.rm = TRUE)
+SDPeak2 <- sd(as.numeric(PeakSide2), na.rm = TRUE)
+SDPeak3 <- sd(as.numeric(PeakSide3), na.rm = TRUE)
+MeanPeak1 <- mean(as.numeric(PeakSide1),na.rm = TRUE)
+MeanPeak2 <- mean(as.numeric(PeakSide2),na.rm = TRUE)
+MeanPeak3 <- mean(as.numeric(PeakSide3),na.rm = TRUE)
+```
+
+```{r}
+THPeak1 <- MeanPeak1 + SDPeak1
+THPeak2 <- MeanPeak2 + SDPeak3
+THPeak3 <- MeanPeak3 + SDPeak3
+```
+
+
+```{r}
+#removing things with 1 sd higher than normal 
+Factor <- matrix(nrow=1202,ncol=1)
+for (x in 1:dim(ModData3)[1]) {
+ FirstCutOff <- round(length(ModData3[1,]) * 0.3)
+ SecondCutOff <- round(length(ModData3[1,]) * 0.7)
+ #if (max(ModData3[x,1:FirstCutOff]) > THPeak1 | max(ModData3[x,(FirstCutOff+1):(SecondCutOff-1)]) > THPeak2 | max(ModData3[x,SecondCutOff:length(ModData3)]) > THPeak3 ) {
+#   Factor[x] <- 1 #bad
+# } else {
+  # Factor[x] <- 2 #good
+ #}
+}
+```
+
+```{r}
+TOF <- matrix(, nrow = length(channellist[[ChannelToCluster]][, 1]), ncol = 2)
+    for (x in 1:(length(channellist[[ChannelToCluster]][, 1])-1)) {
+        TOF[x, 1] <- which.min(channellist[[ChannelToCluster]][x, ])
+        if (as.numeric(TOF[x, 1]) < 50) {
+            TOF[x, 2] <- "NA"
+        }
+        else if (as.numeric(TOF[x, 1]) >= 50 & as.numeric(TOF[x, 
+            1]) < 75) {
+            TOF[x, 2] <- "L1"
+        }
+        else if (as.numeric(TOF[x, 1]) >= 75 & as.numeric(TOF[x, 
+            1]) < 150) {
+            TOF[x, 2] <- "L2"
+        }
+        else if (as.numeric(TOF[x, 1]) >= 150 & as.numeric(TOF[x, 
+            1]) < 225) {
+            TOF[x, 2] <- "L3"
+        }
+        else if (as.numeric(TOF[x, 1]) >= 225 & as.numeric(TOF[x, 
+            1]) < 500) {
+            TOF[x, 2] <- "L4"
+        }
+        else if (as.numeric(TOF[x, 1]) >= 500 & as.numeric(TOF[x, 
+            1]) < 800) {
+            TOF[x, 2] <- "YoungAdult"
+        }
+        else if (as.numeric(TOF[x, 1]) >= 800) {
+            TOF[x, 2] <- "Adult"
+        }
+    }
+    StagesList <- list()
+    StagesList[[1]] <- channellist[[ChannelToCluster]][which(TOF[, 2] == "L1"), ]
+    StagesList[[2]] <- channellist[[ChannelToCluster]][which(TOF[, 2] == "L2"), ]
+    StagesList[[3]] <- channellist[[ChannelToCluster]][which(TOF[, 2] == "L3"), ]
+    StagesList[[4]] <- channellist[[ChannelToCluster]][which(TOF[, 2] == "L4"), ]
+    StagesList[[5]] <- channellist[[ChannelToCluster]][which(TOF[, 2] == "YoungAdult"), 
+        ]
+    StagesList[[6]] <- channellist[[ChannelToCluster]][which(TOF[, 2] == "Adult"), ]
+```
+
+# lets do their method with each stage 
+
+#finding PH EXT in edges and middle 
+#for stages 1, 2,3, 4 
+```{r}
+Negative <- list()
+Positive <- list()
+for (m in 1:4) {
+  
+UnModData <- StagesList[[m]]
+PeakSide1 <- matrix(nrow=dim(UnModData)[1],ncol=1)
+PeakSide2<- matrix(nrow=dim(UnModData)[1],ncol=1)
+PeakSide3 <- matrix(nrow=dim(UnModData)[1],ncol=1)
+PeakSide4 <- matrix(nrow=dim(UnModData)[1],ncol=1)
+for (x in 1:dim(UnModData)[1]) {
+  ModData3 <- as.numeric(UnModData[x,1:((which(as.numeric(UnModData[x,]) == 0)[1] -1))])
+   FirstCutOff <- round(length(ModData3) * 0.3)
+ SecondCutOff <- round(length(ModData3) * 0.7)
+  PeakSide1[x] <- max(ModData3[1:FirstCutOff])
+  PeakSide2[x] <- max(ModData3[(FirstCutOff+1):(SecondCutOff-1)])
+   PeakSide3[x] <- max(ModData3[SecondCutOff:length(ModData3)])
+   if (PeakSide1[x] >= PeakSide3[x]) {
+     PeakSide4[x] <- PeakSide1[x]
+   } else {
+          PeakSide4[x] <- PeakSide3[x]
+
+   }
+}
+SDPeak1 <- sd(as.numeric(PeakSide1), na.rm = TRUE)
+SDPeak2 <- sd(as.numeric(PeakSide2), na.rm = TRUE)
+SDPeak3 <- sd(as.numeric(PeakSide3), na.rm = TRUE)
+MeanPeak1 <- mean(as.numeric(PeakSide1),na.rm = TRUE)
+MeanPeak2 <- mean(as.numeric(PeakSide2),na.rm = TRUE)
+MeanPeak3 <- mean(as.numeric(PeakSide3),na.rm = TRUE)
+x <- PeakSide2
+y <- PeakSide4
+z <- lm(y ~ x)
+sdtest <- sd(abs(z$residuals))
+plot(x,y)
+abline(z$coefficients[1]-sdtest,z$coefficients[2])
+abline(z$coefficients[1]+sdtest,z$coefficients[2])
+yfit <- z$coefficients[2] * x + z$coefficients[1]+sdtest
+resi <- y - yfit
+
+Negative[[m]] <- rownames(UnModData)[which(resi > 0 )]
+Positive[[m]] <- rownames(UnModData)[which(resi < 0 )]
+}
+
+NegativeSD <- c(Negative[[1]],Negative[[2]],Negative[[3]],Negative[[4]])
+PositiveSD <- c(Positive[[1]],Positive[[2]],Positive[[3]],Positive[[4]])
+```
+
+```{r}
+x <- PeakSide2
+y <- PeakSide4
+z <- lm(y ~ x)
+sdtest <- sd(abs(z$residuals))
+plot(x,y)
+abline(z$coefficients[1]-sdtest,z$coefficients[2])
+abline(z$coefficients[1]+sdtest,z$coefficients[2])
+yfit <- z$coefficients[2] * x + z$coefficients[1]+sdtest
+resi <- y - yfit
+
+```
+
+
+
+```{r}
+yfit <- z$coefficients[2] * x + z$coefficients[1]+sdtest
+resi <- y - yfit
+
+Negative3 <- rownames(UnModData)[which(resi > 0 )]
+Positive3 <- rownames(UnModData)[which(resi < 0 )]
+
+```
+
+```{r}
+PositiveMethod <- c(Positive1,Positive2,Positive3)
+NegativeMethod <- c(Negative1,Negative2,Negative3)
+```
+
+
+```{r}
+#Positive <- GoodWormID
+TP <- sum((Positive %in% WormIDs[[1]]), na.rm = TRUE)
+#Negative <- BadWormID
+TN <- sum(Negative %in% WormIDs[[2]],na.rm = TRUE)# - sum((Negative %in% WormIDs[[1]]), na.rm = TRUE)
+(TP + TN) / (length(Positive) + length(Negative))
+# Accuracy after the filtering is  0.8921283 
+TP/length(Positive)
+TP/(TP+(length(Negative) - TN))
+TN/(TN + (length(Positive) - TP))
+```
+
+# beads experiment 
+
+
+```{r}
+# idea is create function that takes in the stuff finds the beads, changes tof to micro meters 
+# find objects that fluoresce in specific location
+BeadNames <- matrix(nrow=length(colnames(ChExt)),ncol=2)
+count <- 1
+for (x in 1:dim(ChExt)[2]){
+  if (max(Ch1[,x]) > 1000 && max(Ch2[,x]) >1000 && max(Ch3[,x]) > 1000 ) {
+    BeadNames[count,1] <- colnames(ChExt)[x]
+  count <- count + 1
+    }
+}
+
+# find average length of said beads
+count <- 1
+for (x in na.omit(BeadNames[,1])){
+BeadNames[count,2] <- which.first(ChExt[,x] == 0) - 1
+count <- count + 1
+  }
+BeadNames <- na.omit(BeadNames)
+BeadNames[,2] <- as.numeric(BeadNames[,2])
+BeadTOF <- mean(as.numeric(BeadNames[,2]))
+# now we need to find relation between bead TOF and actual bead length 
+
+```
+
+# run #1 
+mean(as.numeric(BeadNames[,2]))
+[1] 32.25015
+> sd(as.numeric(BeadNames[,2]))
+[1] 2.579949
+
+# run #2 
+ BeadTOF
+[1] 32.0316
+> sd(as.numeric(BeadNames[,2]))
+[1] 2.641321
+
+# run #3 
+> BeadTOF
+[1] 32.0316
+> sd(as.numeric(BeadNames[,2]))
+[1] 2.641321
+
