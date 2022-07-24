@@ -57,6 +57,8 @@ library(scales)
 library(COPASProfiler) 
 library(kernlab)
 library(jmotif) 
+library(pracma)
+library(xfun)
 ```
 
 ### Loading the data 
@@ -193,7 +195,7 @@ ChannelNumber <- 1
 channellist2 <- ReadChannel(Ch0D2,Ch1D2,Ch2D2,Ch3D2)
 # The PreProcessData function removes profiles outside of the provided thresholds, removes trailing zeros for each profile
 # applies the PAA function to uniform the length, and applies z-score normalization on the Y axis. 
-ModData2 <- PreProcessData(channellist2, MinLength,MaxLength,MaxAmp, ChannelNumber,SummaryDataPath))
+ModData2 <- PreProcessData(channellist2, MinLength,MaxLength,MaxAmp, ChannelNumber,SummaryDataPath2)
 # The CreateTrainingSetIDs function translates the annotated IDs csv 
 # file to the data we have and gives out the index of the worms that are annotated.
 WormIDs2 <- CreateTrainingSetIDs(ModData2,GoodIDD2)
