@@ -25,14 +25,14 @@ FilterChannel <- function(ch,MaxAmp, MinLength,MaxLength) {
     WormNumber <- which(ch > MaxAmp, arr.ind = TRUE)
     WormNumber <- WormNumber[,1]
     for (x in 1:length(ch[,1])) {
-      if (which.min(ch[x,]) > MaxLength | which.min(ch[x,]) < MinLength) {
+      if (sum(which.min(ch[x,]) > MaxLength | which.min(ch[x,]) < MinLength)!=0) {
         WormNumber <- c(WormNumber,x)
       }
     }
     WormNumber <- sort(unique(WormNumber))
   } else if (!missing(MinLength)) {
     for (x in 1:length(ch[,1])) {
-      if (which.min(ch[x,]) > MaxLength | which.min(ch[x,]) < MinLength) {
+      if (sum(which.min(ch[x,]) > MaxLength | which.min(ch[x,]) < MinLength)!=0) {
         WormNumber <- c(WormNumber,x)
       }
     }

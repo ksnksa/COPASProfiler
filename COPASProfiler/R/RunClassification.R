@@ -15,6 +15,7 @@ RunClassification <- function(DataDirectory,ModelDirectory,MaxAmp,MinLength,MaxL
 
   ModelName <- load(ModelDirectory)
   Model <- get(ModelName)
+  MaxLength <- 10000
   ModelVectorLength <- dim(Model@xmatrix[[1]])[2]
   if (ModelVectorLength >= MinLength) {
     stop(paste('Model vector length is:',ModelVectorLength,' Minimum Length input must be at least one more than Model vector length'))
@@ -33,7 +34,7 @@ RunClassification <- function(DataDirectory,ModelDirectory,MaxAmp,MinLength,MaxL
     Ch0 <- t(x)
     Ch0 <- Ch0[-dim(Ch0)[1],]
   }
-  Index <- FilterChannel(Ch0,MaxAmp,MinLength,MaxLength)
+  Index <- FilterChannel(Ch0,MaxAmp,ModelVectorLength+1, MaxLength)
   channellist <- list()
   ChannelToCluster <- 1
   channellist[[ChannelToCluster]] <- Ch0
@@ -41,7 +42,12 @@ RunClassification <- function(DataDirectory,ModelDirectory,MaxAmp,MinLength,MaxL
   UnModData <- channellist[[ChannelToCluster]]
   ModData3 <- UnModData[,1:(ModelVectorLength)]
   for (row in 1:(dim(UnModData)[1]-1)){
+    if(sum((which(as.numeric(UnModData[row,]) == 0))) == 0) {
+      ModData3[row,] <- paa(as.numeric(UnModData[row,]),ModelVectorLength)
+    } else {
+
     ModData3[row,] <- paa(as.numeric(UnModData[row,1:((which(as.numeric(UnModData[row,]) == 0)[1] -1))]),ModelVectorLength)
+    }
   }
   for (row in 1:dim(ModData3)[1]) {
     ModData3[row,] <- scale(as.numeric(ModData3[row,]))
